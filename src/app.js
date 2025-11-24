@@ -1,25 +1,15 @@
 /**
- * app.js - Initialisation et orchestration de l'application Aer
+ * app.js - Initialisation et orchestration de l'application
  * 
  * Gère:
- * - Chargement des données CSV
- * - Création des containers de background (cadres visuels)
+ * - Chargement des données
+ * - Création des containers de background externes
  * - Initialisation des composants UI
- * - Animation de chargement avec barre de progression
- * - Séparations visuelles entre sections
- * 
- * Architecture des backgrounds:
- * - leftBackground.png: cadre englobant TOUT le panel gauche
- * - pollenSeparation.png: séparateurs entre les 3 zones du panel gauche
- * - filterBackground.png: cadre de la zone filtres (panel droit)
+ * - Animation de chargement
  */
 
 const App = {
     initialized: false,
-    loadedAssets: {
-        backgrounds: {},
-        separators: {}
-    },
     
     /**
      * Initialise l'application
@@ -62,19 +52,17 @@ const App = {
             }, 50);
             
             // Charger les données en parallèle
-            console.log('[App] 📊 Chargement des données CSV...');
+            console.log('[App] 📊 Chargement des données...');
             await DataLoader.loadData();
             dataLoaded = true;
-            console.log('[App] ✓ Données chargées avec succès');
             
             // Initialiser l'année par défaut
             const defaultYear = AppState.getDefaultYear();
             AppState.setSelectedYear(defaultYear);
-            console.log(`[App] 📅 Année par défaut: ${defaultYear}`);
             
-            // Créer les containers de background avec séparations
+            // NOUVEAU: Créer les containers de background externes
             console.log('[App] 🎨 Création des containers de background...');
-            await this.createBackgroundContainers();
+            this.createBackgroundContainers();
             
             // Initialiser les composants UI
             console.log('[App] 🎨 Initialisation des composants UI...');
@@ -92,184 +80,62 @@ const App = {
     },
     
     /**
-     * Crée les containers de background et séparations
-     * Architecture:
-     * - Panel gauche: leftBackground.png (cadre englobant) + pollenSeparation.png (séparateurs)
-     * - Panel filtres: filterBackground.png (cadre fixe)
+     * NOUVEAU: Crée les containers de background externes pour garantir leur visibilité
+     * Les backgrounds sont des "cadres" avec bordures de 3-4px
      */
-    async createBackgroundContainers() {
-        console.log('[App] 🖼️  Configuration des backgrounds et séparations...');
-        
-        // 1. PANEL GAUCHE - Background englobant
-        await this.createLeftPanelBackground();
-        
-        // 2. PANEL GAUCHE - Séparations entre zones
-        this.createLeftPanelSeparations();
-        
-        // 3. PANEL FILTRES - Background fixe
-        await this.createFiltersBackground();
-        
-        console.log('[App] ✅ Tous les backgrounds et séparations créés');
-    },
-    
-    /**
-     * Crée le background englobant du panel gauche
-     * leftBackground.png encadre TOUTE la zone (controls-top + visualization + controls-bottom)
-     */
-    async createLeftPanelBackground() {
+    createBackgroundContainers() {
+        // 1. Background pour le panel gauche (leftBackground.png)
         const leftPanel = document.getElementById('left-panel');
-        if (!leftPanel) {
-            console.error('[App] ❌ Panel gauche introuvable');
-            return;
+        if (leftPanel && !leftPanel.querySelector('.left-background-container')) {
+            const leftBg = document.createElement('div');
+            leftBg.className = 'left-background-container';
+            leftPanel.appendChild(leftBg);
+            console.log('[App] ✓ Container background créé: leftBackground.png');
         }
         
-        // Vérifier si le container existe déjà
-        if (leftPanel.querySelector('.left-background-container')) {
-            console.log('[App] ℹ️  Container background gauche déjà existant');
-            return;
+        // 2. Background pour la carte (mapBackground.png)
+        const mapPanel = document.getElementById('map-panel');
+        if (mapPanel && !mapPanel.querySelector('.map-background-container')) {
+            const mapBg = document.createElement('div');
+            mapBg.className = 'map-background-container';
+            mapPanel.appendChild(mapBg);
+            console.log('[App] ✓ Container background créé: mapBackground.png');
         }
         
-        // Créer le container de background
-        const leftBg = document.createElement('div');
-        leftBg.className = 'left-background-container';
-        
-        // Charger l'image pour vérification
-        try {
-            const img = await this.loadImage(CONSTANTS.PATHS.BACKGROUNDS + 'leftBackground.png');
-            this.loadedAssets.backgrounds.left = img;
-            console.log(`[App] ✓ leftBackground.png chargé (${img.width}x${img.height}px)`);
-        } catch (e) {
-            console.warn('[App] ⚠️  leftBackground.png introuvable, utilisation fallback');
-        }
-        
-        // Insérer le background AVANT le contenu (z-index géré par CSS)
-        leftPanel.insertBefore(leftBg, leftPanel.firstChild);
-        console.log('[App] ✓ Container background gauche créé');
-    },
-    
-    /**
-     * Crée les séparations visuelles dans le panel gauche
-     * pollenSeparation.png entre:
-     * - controls-top et visualization-container
-     * - visualization-container et controls-bottom
-     */
-    createLeftPanelSeparations() {
-        const leftPanel = document.getElementById('left-panel');
-        if (!leftPanel) return;
-        
-        const controlsTop = document.getElementById('controls-top');
-        const visualization = document.getElementById('visualization-container');
-        const controlsBottom = document.getElementById('controls-bottom');
-        
-        if (!controlsTop || !visualization || !controlsBottom) {
-            console.error('[App] ❌ Zones du panel gauche introuvables');
-            return;
-        }
-        
-        // Séparation 1: après controls-top
-        const sep1 = this.createSeparator('top-separator');
-        controlsTop.insertAdjacentElement('afterend', sep1);
-        console.log('[App] ✓ Séparateur top créé (après controls-top)');
-        
-        // Séparation 2: après visualization-container
-        const sep2 = this.createSeparator('bottom-separator');
-        visualization.insertAdjacentElement('afterend', sep2);
-        console.log('[App] ✓ Séparateur bottom créé (après visualization)');
-    },
-    
-    /**
-     * Crée un élément séparateur avec pollenSeparation.png
-     * @param {string} className - Classe CSS à appliquer
-     * @returns {HTMLElement} Élément séparateur
-     */
-    createSeparator(className) {
-        const separator = document.createElement('div');
-        separator.className = `panel-separator ${className}`;
-        
-        // Charger l'image de séparation
-        const img = new Image();
-        img.onload = () => {
-            this.loadedAssets.separators[className] = img;
-            console.log(`[App] ✓ pollenSeparation.png chargé pour ${className} (${img.width}x${img.height}px)`);
-        };
-        img.onerror = () => {
-            console.warn(`[App] ⚠️  pollenSeparation.png introuvable pour ${className}`);
-        };
-        img.src = CONSTANTS.PATHS.BACKGROUNDS + 'pollenSeparation.png';
-        
-        return separator;
-    },
-    
-    /**
-     * Crée le background FIXE du panel filtres
-     * filterBackground.png suit le scroll du panel
-     */
-    async createFiltersBackground() {
+        // 3. Background FIXE pour le panel filtres (filterBackground.png)
         const filtersPanel = document.getElementById('filters-panel');
-        if (!filtersPanel) {
-            console.error('[App] ❌ Panel filtres introuvable');
-            return;
+        if (filtersPanel && !filtersPanel.querySelector('.filters-background-container')) {
+            // Envelopper le contenu existant
+            const content = document.createElement('div');
+            content.className = 'filters-content';
+            while (filtersPanel.firstChild) {
+                content.appendChild(filtersPanel.firstChild);
+            }
+            
+            // Créer le background fixe
+            const filtersBg = document.createElement('div');
+            filtersBg.className = 'filters-background-container';
+            
+            // Fonction pour mettre à jour la position du background
+            const updateFiltersBgPosition = () => {
+                const rect = filtersPanel.getBoundingClientRect();
+                filtersBg.style.left = rect.left + 'px';
+                filtersBg.style.top = rect.top + 'px';
+                filtersBg.style.width = rect.width + 'px';
+                filtersBg.style.height = rect.height + 'px';
+            };
+            
+            // Ajouter les éléments
+            filtersPanel.appendChild(filtersBg);
+            filtersPanel.appendChild(content);
+            
+            // Mettre à jour la position initialement et sur scroll/resize
+            updateFiltersBgPosition();
+            filtersPanel.addEventListener('scroll', updateFiltersBgPosition);
+            window.addEventListener('resize', updateFiltersBgPosition);
+            
+            console.log('[App] ✓ Container background fixe créé: filterBackground.png');
         }
-        
-        // Vérifier si le container existe déjà
-        if (filtersPanel.querySelector('.filters-background-container')) {
-            console.log('[App] ℹ️  Container background filtres déjà existant');
-            return;
-        }
-        
-        // Envelopper le contenu existant
-        const content = document.createElement('div');
-        content.className = 'filters-content';
-        while (filtersPanel.firstChild) {
-            content.appendChild(filtersPanel.firstChild);
-        }
-        
-        // Créer le background fixe
-        const filtersBg = document.createElement('div');
-        filtersBg.className = 'filters-background-container';
-        
-        // Charger l'image pour vérification
-        try {
-            const img = await this.loadImage(CONSTANTS.PATHS.BACKGROUNDS + 'filterBackground.png');
-            this.loadedAssets.backgrounds.filters = img;
-            console.log(`[App] ✓ filterBackground.png chargé (${img.width}x${img.height}px)`);
-        } catch (e) {
-            console.warn('[App] ⚠️  filterBackground.png introuvable, utilisation fallback');
-        }
-        
-        // Fonction pour mettre à jour la position du background
-        const updateFiltersBgPosition = () => {
-            const rect = filtersPanel.getBoundingClientRect();
-            filtersBg.style.left = rect.left + 'px';
-            filtersBg.style.top = rect.top + 'px';
-            filtersBg.style.width = rect.width + 'px';
-            filtersBg.style.height = rect.height + 'px';
-        };
-        
-        // Ajouter les éléments
-        filtersPanel.appendChild(filtersBg);
-        filtersPanel.appendChild(content);
-        
-        // Mettre à jour la position initialement et sur scroll/resize
-        updateFiltersBgPosition();
-        filtersPanel.addEventListener('scroll', updateFiltersBgPosition);
-        window.addEventListener('resize', updateFiltersBgPosition);
-        
-        console.log('[App] ✓ Container background filtres créé (fixe avec scroll)');
-    },
-    
-    /**
-     * Charge une image de manière asynchrone
-     * @param {string} src - Chemin de l'image
-     * @returns {Promise<Image>} Image chargée
-     */
-    loadImage(src) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error(`Échec chargement: ${src}`));
-            img.src = src;
-        });
     },
     
     /**
@@ -282,44 +148,6 @@ const App = {
         console.log('%c[App] ✅ Application initialisée avec succès!', 'color: #6b9464; font-weight: bold;');
         console.log(`[App] 📍 ${AppState.zones.length} zones chargées`);
         console.log(`[App] 📅 ${AppState.years.length} années disponibles`);
-        
-        // Log des assets chargés
-        this.logLoadedAssets();
-    },
-    
-    /**
-     * Log détaillé des assets chargés
-     */
-    logLoadedAssets() {
-        console.log('%c[App] 📦 Assets chargés:', 'color: #6b9464; font-weight: bold;');
-        
-        // Backgrounds
-        const bgCount = Object.keys(this.loadedAssets.backgrounds).length;
-        console.log(`  🖼️  Backgrounds: ${bgCount}/2`);
-        if (this.loadedAssets.backgrounds.left) {
-            console.log('    ✓ leftBackground.png');
-        } else {
-            console.log('    ✗ leftBackground.png');
-        }
-        if (this.loadedAssets.backgrounds.filters) {
-            console.log('    ✓ filterBackground.png');
-        } else {
-            console.log('    ✗ filterBackground.png');
-        }
-        
-        // Séparateurs
-        const sepCount = Object.keys(this.loadedAssets.separators).length;
-        console.log(`  🔗 Séparateurs: ${sepCount}/2`);
-        if (this.loadedAssets.separators['top-separator']) {
-            console.log('    ✓ pollenSeparation.png (top)');
-        } else {
-            console.log('    ✗ pollenSeparation.png (top)');
-        }
-        if (this.loadedAssets.separators['bottom-separator']) {
-            console.log('    ✓ pollenSeparation.png (bottom)');
-        } else {
-            console.log('    ✗ pollenSeparation.png (bottom)');
-        }
     },
     
     /**
@@ -363,9 +191,6 @@ const App = {
         container.appendChild(loading);
     },
     
-    /**
-     * Masque l'écran de chargement avec transition
-     */
     hideLoadingMessage() {
         const loading = document.getElementById('loading-message');
         if (loading) {
@@ -379,10 +204,6 @@ const App = {
         }
     },
     
-    /**
-     * Affiche un message d'erreur
-     * @param {Error} error - Erreur à afficher
-     */
     showErrorMessage(error) {
         const container = document.getElementById('app-container');
         const errorDiv = document.createElement('div');
@@ -427,15 +248,9 @@ const App = {
      * Nettoie l'application (utile pour les tests)
      */
     destroy() {
-        console.log('[App] 🧹 Nettoyage de l\'application...');
-        
         if (Visuals) Visuals.destroy();
         if (PollenPanel) PollenPanel.destroy();
         AppState.stopPlaying();
-        
         this.initialized = false;
-        this.loadedAssets = { backgrounds: {}, separators: {} };
-        
-        console.log('[App] ✓ Application nettoyée');
     }
 };

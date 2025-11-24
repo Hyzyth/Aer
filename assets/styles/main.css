@@ -1,31 +1,9 @@
 /**
  * main.css - Styles principaux de l'application Aer
- * 
- * Architecture des backgrounds:
- * - leftBackground.png: cadre englobant tout le panel gauche (z-index: 0)
- * - pollenSeparation.png: séparateurs entre zones (z-index: 5)
- * - filterBackground.png: cadre du panel filtres (z-index: 0)
- * 
- * Contenu toujours au-dessus des backgrounds (z-index: 10+)
+ * Version avec backgrounds en panels externes pour visibilité garantie
  */
 
-/* ========================================
-   RESET & TYPOGRAPHIES
-   ======================================== */
-
-@font-face {
-    font-family: 'PPLettraMono';
-    src: url('font/PPLettraMono-Ultralight.otf') format('opentype');
-    font-weight: 200;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'PPLettraMono';
-    src: url('font/PPLettraMono-Medium.otf') format('opentype');
-    font-weight: 500;
-    font-style: normal;
-}
+/* ===== CONFIGURATION GLOBALE ===== */
 
 * {
     margin: 0;
@@ -33,103 +11,110 @@
     box-sizing: border-box;
 }
 
-body {
-    font-family: 'PPLettraMono', monospace;
+/* Polices personnalisées - chemins vérifiés */
+@font-face {
+    font-family: 'PPLettraMono';
+    src: url('../font/PPLettraMono-Ultralight.otf') format('opentype');
     font-weight: 200;
-    background-color: #f5f9f0;
-    overflow: hidden;
+    font-style: normal;
+    font-display: swap;
 }
 
-/* ========================================
-   LAYOUT PRINCIPAL
-   ======================================== */
+@font-face {
+    font-family: 'PPLettraMono';
+    src: url('../font/PPLettraMono-Medium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    --nature-light: #f5f9f0;
+    --nature-medium: #e8f3dc;
+    --nature-dark: #2d4a2b;
+    --nature-accent: #6b9464;
+    --controls-bg: #6b9464;
+    --controls-text: #ffffff;
+    --legend-bg: rgba(45, 74, 43, 0.9);
+    --legend-text: #ffffff;
+    --tooltip-bg: rgba(45, 74, 43, 0.95);
+    --tooltip-text: #ffffff;
+    --font-light: 'PPLettraMono', sans-serif;
+    --font-medium: 'PPLettraMono', sans-serif;
+}
+
+body {
+    font-family: var(--font-light);
+    font-weight: 200;
+    background: var(--nature-light);
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+}
 
 #app-container {
     display: flex;
-    width: 100vw;
+    width: 100%;
     height: 100vh;
-    position: relative;
+    gap: 0;
+    padding: 0;
+    margin: 0;
 }
 
-/* ========================================
-   PANEL GAUCHE (70%) - Avec background englobant
-   ======================================== */
-
-#left-panel {
-    width: 70%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    position: relative;
+.panel {
     overflow: hidden;
 }
 
-/* Background englobant TOUT le panel gauche */
-.left-background-container {
+/* ===== PANNEAU GAUCHE AVEC BACKGROUND EXTERNE ===== */
+#left-panel {
+    width: 70%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Cadre leftBackground.png par-dessus tout le panel gauche */
+#left-panel::after {
+    content: '';
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('../background/leftBackground.png');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-position: center;
-    z-index: 0;
-    pointer-events: none;
+    background: url('../background/leftBackground.png') no-repeat center center;
+    background-size: cover;
+    pointer-events: none; /* Ne bloque pas les interactions */
+    z-index: 10; /* Par-dessus le contenu mais sous les overlays */
 }
 
-/* Séparateurs entre zones du panel gauche */
-.panel-separator {
-    width: 100%;
-    height: 8px;
-    background-image: url('../background/pollenSeparation.png');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-position: center;
-    flex-shrink: 0;
-    z-index: 5;
-    pointer-events: none;
-}
-
-/* Zones du panel gauche - au-dessus du background */
-#controls-top,
-#visualization-container,
-#controls-bottom {
-    position: relative;
-    z-index: 10;
-}
-
-/* Zone supérieure: contrôles et sélecteurs */
 #controls-top {
     display: flex;
     align-items: center;
-    padding: 20px;
-    gap: 20px;
-    background: transparent;
-    flex-shrink: 0;
-    height: 80px;
-}
-
-/* Zone centrale: visualisation */
-#visualization-container {
-    flex: 1;
+    gap: 15px;
+    padding: 15px;
+    background: var(--controls-bg);
     position: relative;
-    overflow: hidden;
-    background: transparent;
+    z-index: 5;
 }
 
-/* Zone inférieure: timeline */
-#controls-bottom {
-    padding: 20px;
-    background: transparent;
-    flex-shrink: 0;
-    height: 100px;
+/* Séparateur après controls-top */
+#controls-top::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: url('../background/pollenSeparation.png') repeat-x center center;
+    background-size: auto 100%;
+    z-index: 15; /* Par-dessus le cadre leftBackground */
 }
 
-/* ========================================
-   CONTRÔLES SUPÉRIEURS
-   ======================================== */
+.controls-right {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+}
 
 #mode-selector {
     display: flex;
@@ -137,151 +122,95 @@ body {
 }
 
 .mode-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid transparent;
     padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid #d4ead1;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    font-family: 'PPLettraMono', monospace;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--controls-text);
+    font-family: var(--font-light);
     font-weight: 200;
-    font-size: 11px;
-    color: #2d4a2b;
 }
 
 .mode-btn img {
     width: 24px;
     height: 24px;
-    margin-bottom: 4px;
-    opacity: 0.7;
-    transition: opacity 0.3s ease;
 }
 
 .mode-btn:hover {
-    background: rgba(255, 255, 255, 1);
-    border-color: #6b9464;
-    transform: translateY(-2px);
-}
-
-.mode-btn:hover img {
-    opacity: 1;
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .mode-btn.active {
-    background: #6b9464;
-    border-color: #6b9464;
-    color: white;
-}
-
-.mode-btn.active img {
-    opacity: 1;
-    filter: brightness(0) invert(1);
-}
-
-#year-selector {
-    display: flex;
-    align-items: center;
+    background: rgba(255, 255, 255, 0.4);
+    border-color: var(--controls-text);
 }
 
 #year-selector select {
-    padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid #d4ead1;
-    border-radius: 8px;
-    font-family: 'PPLettraMono', monospace;
-    font-weight: 200;
+    padding: 8px 15px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--controls-text);
     font-size: 14px;
-    color: #2d4a2b;
     cursor: pointer;
-    transition: all 0.3s ease;
+    font-family: var(--font-light);
+    font-weight: 200;
 }
 
-#year-selector select:hover {
-    border-color: #6b9464;
-}
-
-.spacer {
-    flex: 1;
-}
-
-.controls-right {
-    display: flex;
-    gap: 10px;
+#year-selector select option {
+    background: var(--controls-bg);
+    color: var(--controls-text);
 }
 
 .icon-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
     width: 40px;
     height: 40px;
-    padding: 8px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid #d4ead1;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-right: 1rem;
 }
 
 .icon-btn img {
-    width: 20px;
-    height: 20px;
-    opacity: 0.7;
-    transition: opacity 0.3s ease;
+    width: 100%;
+    height: 100%;
 }
 
 .icon-btn:hover {
-    background: rgba(255, 255, 255, 1);
-    border-color: #6b9464;
-    transform: translateY(-2px);
-}
-
-.icon-btn:hover img {
-    opacity: 1;
-}
-
-/* ========================================
-   CONTRÔLES TEMPORELS
-   ======================================== */
-
-#timeline-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .timeline-btn {
-    width: 40px;
-    height: 40px;
-    padding: 8px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid #d4ead1;
-    border-radius: 8px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.2);
     cursor: pointer;
-    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s;
+    border: none;
 }
 
 .timeline-btn img {
-    width: 20px;
-    height: 20px;
-    opacity: 0.7;
-    transition: opacity 0.3s ease;
+    width: 100%;
+    height: 100%;
 }
 
 .timeline-btn:hover {
-    background: rgba(255, 255, 255, 1);
-    border-color: #6b9464;
-}
-
-.timeline-btn:hover img {
-    opacity: 1;
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
 }
 
 .timeline-btn:disabled {
@@ -289,484 +218,687 @@ body {
     cursor: not-allowed;
 }
 
-#date-display {
-    flex: 1;
-    text-align: center;
-    font-family: 'PPLettraMono', monospace;
-    font-weight: 500;
-    font-size: 16px;
-    color: #2d4a2b;
+.timeline-btn:disabled:hover {
+    transform: none;
 }
 
-/* Timeline avec 3 couches */
+#visualization-container {
+    flex: 1;
+    position: relative;
+    background: transparent;
+    overflow: hidden;
+    z-index: 5;
+}
+
+#controls-bottom {
+    padding: 15px;
+    background: var(--controls-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    z-index: 5;
+}
+
+#controls-bottom::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: url('../background/pollenSeparation.png') repeat-x center center;
+    background-size: auto 100%;
+    z-index: 15; /* Par-dessus le cadre leftBackground */
+}
+
+#timeline-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    justify-content: center;
+}
+
+#date-display {
+    color: var(--controls-text);
+    font-size: 16px;
+    font-weight: 200;
+    margin-left: 20px;
+    min-width: 200px;
+    text-align: left;
+    font-family: var(--font-light);
+}
+
+/* ===== TIMELINE AVEC BACKGROUNDS VISIBLES ===== */
 #timeline-slider-container {
     position: relative;
     width: 100%;
-    height: 30px;
+    height: 40px;
+    display: flex;
+    align-items: center;
 }
 
-/* Couche 1: Background (timeBackground.png) */
 .timeline-background {
     position: absolute;
-    top: 0;
+    top: 50%;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: 25px;
+    transform: translateY(-50%);
     background-image: url('../background/timeBackground.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
-    z-index: 1;
+    background-position: center;
     pointer-events: none;
+    z-index: 1;
 }
 
-/* Couche 2: Barre pleine (timeBar.png) - TOUJOURS 100% */
 .timeline-bar {
     position: absolute;
-    top: 0;
+    top: 50%;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: 8px;
+    transform: translateY(-50%);
     background-image: url('../background/timeBar.png');
-    background-size: 100% 100%;
+    background-size: 99% 100%;
     background-repeat: no-repeat;
-    z-index: 2;
+    background-position: center;
     pointer-events: none;
+    z-index: 2;
 }
 
-/* Couche 3: Slider avec timeDot.png */
 #timeline-slider {
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: relative;
     width: 100%;
-    height: 100%;
+    height: 40px;
     -webkit-appearance: none;
     appearance: none;
     background: transparent;
     outline: none;
     z-index: 3;
+    margin: 0;
     cursor: pointer;
+}
+
+#timeline-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 40px;
+    background: transparent;
+    border: none;
+}
+
+#timeline-slider::-moz-range-track {
+    width: 100%;
+    height: 40px;
+    background: transparent;
+    border: none;
 }
 
 #timeline-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: transparent;
     background-image: url('../background/timeDot.png');
     background-size: contain;
     background-repeat: no-repeat;
+    background-position: center;
     cursor: pointer;
+    margin-top: 6px;
+    border: none;
+}
+
+#timeline-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
 }
 
 #timeline-slider::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: transparent;
     background-image: url('../background/timeDot.png');
     background-size: contain;
     background-repeat: no-repeat;
-    border: none;
+    background-position: center;
     cursor: pointer;
+    border: none;
 }
 
-/* ========================================
-   PANELS DROITS (30%)
-   ======================================== */
-
+/* ===== PANNEAUX DROITS ===== */
 #right-panels {
     width: 30%;
-    height: 100%;
     display: flex;
     flex-direction: column;
+    gap: 0;
 }
 
-/* Panel carte (50% hauteur) */
+/* ===== PANNEAU CARTE AVEC BACKGROUND EXTERNE ===== */
 #map-panel {
-    flex: 1;
+    height: 50%;
     position: relative;
-    overflow: hidden;
+}
+
+/* Background container externe pour mapBackground (cadre) */
+.map-background-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('../background/mapBackground.png');
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    z-index: 10;
 }
 
 #map-container {
     width: 100%;
     height: 100%;
+    position: relative;
+    z-index: 1;
 }
 
-/* Background carte */
-.map-background-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url('../background/mapBackground.png');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    z-index: 0;
-    pointer-events: none;
+.leaflet-container {
+    border-radius: 0;
+    background: transparent;
 }
 
-/* Contrôles de thème carte */
 .map-theme-controls {
     position: absolute;
     top: 10px;
     right: 10px;
+    z-index: 1000;
     display: flex;
     gap: 5px;
-    z-index: 1000;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .theme-btn {
     width: 36px;
     height: 36px;
-    padding: 6px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid #d4ead1;
+    border: 2px solid #ddd;
     border-radius: 6px;
+    background: white;
     cursor: pointer;
-    transition: all 0.3s ease;
+    padding: 4px;
+    transition: all 0.3s;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.theme-btn img {
-    width: 20px;
-    height: 20px;
-    opacity: 0.7;
-    transition: opacity 0.3s ease;
-}
-
 .theme-btn:hover {
-    background: rgba(255, 255, 255, 1);
-    border-color: #6b9464;
+    transform: scale(1.05);
 }
 
 .theme-btn.active {
-    background: #6b9464;
-    border-color: #6b9464;
+    border-color: var(--nature-accent);
 }
 
-.theme-btn.active img {
-    filter: brightness(0) invert(1);
-    opacity: 1;
-}
-
-/* Panel bottom-right */
-#bottom-right-panel {
-    flex: 1;
-    display: flex;
-}
-
-/* Panel affichage pollens (50% largeur) */
-#pollen-display {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-}
-
-#pollen-display canvas {
+.theme-btn img {
     width: 100%;
     height: 100%;
+    object-fit: contain;
 }
 
-/* Panel filtres (50% largeur) */
-#filters-panel {
-    flex: 1;
+#bottom-right-panel {
+    height: 50%;
+    display: flex;
+    background: transparent;
+}
+
+/* ===== PANNEAU AFFICHAGE POLLENS ===== */
+#pollen-display {
+    width: 50%;
     position: relative;
-    overflow-y: auto;
-    overflow-x: hidden;
+    background: transparent;
 }
 
-/* Background filtres FIXE */
-.filters-background-container {
-    position: fixed;
-    background-image: url('../background/filterBackground.png');
-    background-size: 100% 100%;
+#pollen-display::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('../background/pollenBackground.png');
+    background-size: cover;
+    background-position: center;
     background-repeat: no-repeat;
     z-index: 0;
     pointer-events: none;
 }
 
-/* Contenu filtres au-dessus du background */
+#pollen-display canvas {
+    position: relative;
+    z-index: 1;
+}
+
+/* ===== PANNEAU FILTRES AVEC BACKGROUND EXTERNE FIXE ===== */
+#filters-panel {
+    width: 50%;
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Background container FIXE externe pour filterBackground */
+.filters-background-container {
+    position: fixed;
+    background-image: url('../background/filterBackground.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Contenu du panel filtres au-dessus */
 .filters-content {
     position: relative;
-    z-index: 10;
-    padding: 15px;
+    z-index: 1;
 }
 
-/* Titre filtres */
+
 .filters-title {
-    font-family: 'PPLettraMono', monospace;
-    font-weight: 500;
     font-size: 16px;
-    color: #2d4a2b;
-    margin-bottom: 15px;
-    text-align: center;
+    font-weight: 500;
+    font-family: var(--font-medium);
+    color: var(--nature-dark);
+    margin: 0;
+    padding: 20px 20px 10px 20px;
+    border-bottom: 2px solid var(--nature-accent);
+    background: rgba(245, 249, 240, 0.9);
 }
 
-/* Familles de pollens */
+/* Conteneurs de famille avec séparations pollenSeparation.png */
 .pollen-family-container {
-    margin-bottom: 0;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid transparent;
-    border-radius: 8px;
-    cursor: pointer;
+    margin: 0;
+    padding: 12px 20px;
+    border: none;
+    position: relative;
     transition: all 0.3s ease;
+    cursor: pointer;
+    background: transparent;
 }
 
-.pollen-family-container:hover {
-    background: rgba(255, 255, 255, 1);
-    border-color: var(--family-color, #6b9464);
-    transform: translateX(3px);
+/* Séparation DESSUS avec pollenSeparation.png */
+.pollen-family-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-image: url('../background/pollenSeparation.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 1;
+}
+
+/* Séparation DESSOUS avec pollenSeparation.png */
+.pollen-family-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-image: url('../background/pollenSeparation.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 1;
+}
+
+/* Masquer la séparation du haut pour le premier */
+.pollen-family-container:first-child::before {
+    display: none;
 }
 
 .pollen-family-container.active {
-    border-color: var(--family-color, #6b9464);
-    background: rgba(255, 255, 255, 1);
+    background-color: rgba(107, 148, 100, 0.1);
 }
 
-.pollen-family-container.inactive {
-    opacity: 0.5;
+.pollen-family-container:hover {
+    background-color: rgba(107, 148, 100, 0.15);
 }
 
-/* Titre famille */
+.pollen-family-container.inactive:hover {
+    background-color: rgba(200, 200, 200, 0.05);
+}
+
 .pollen-family-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    font-family: 'PPLettraMono', monospace;
     font-weight: 500;
-    font-size: 14px;
-    color: var(--family-color, #2d4a2b);
+    font-family: var(--font-medium);
+    font-size: 15px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+}
+
+.pollen-family-container.active .pollen-family-title {
+    color: var(--family-color);
+}
+
+.pollen-family-container.inactive .pollen-family-title {
+    color: #999;
 }
 
 .family-indicator {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
     font-size: 16px;
-    font-weight: bold;
+    font-weight: 500;
+    font-family: var(--font-medium);
 }
 
-/* Espèces */
+.pollen-family-container.active .family-indicator {
+    background: var(--family-color);
+}
+
+.pollen-family-container.inactive .family-indicator {
+    background: #ddd;
+}
+
 .species-container {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding-left: 10px;
+    margin-left: 15px;
+    padding-left: 15px;
+    position: relative;
+    z-index: 2;
+}
+
+.pollen-family-container.active .species-container {
+    border-left: 3px solid var(--family-color);
+}
+
+.pollen-family-container.inactive .species-container {
+    border-left: 3px solid #ddd;
 }
 
 .pollen-species {
+    padding: 6px 8px;
+    margin: 4px 0;
+    font-size: 13px;
+    border-radius: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-family: 'PPLettraMono', monospace;
+    font-family: var(--font-light);
     font-weight: 200;
-    font-size: 12px;
-    color: #2d4a2b;
 }
 
-.species-bullet {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    flex-shrink: 0;
+.pollen-species.active {
+    font-weight: 200;
 }
 
 .pollen-species.inactive {
-    opacity: 0.4;
+    color: #aaa;
 }
 
-/* Texte d'aide */
+.species-bullet {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+    display: inline-block;
+}
+
 .filters-help {
-    margin-top: 15px;
-    font-family: 'PPLettraMono', monospace;
-    font-weight: 200;
-    font-size: 10px;
-    color: #666;
+    margin: 20px;
+    padding: 10px;
+    background: rgba(107, 148, 100, 0.1);
+    border-radius: 0;
+    font-size: 12px;
+    color: var(--nature-dark);
     text-align: center;
     font-style: italic;
-}
-
-/* Scrollbar personnalisée pour filtres */
-#filters-panel::-webkit-scrollbar {
-    width: 6px;
-}
-
-#filters-panel::-webkit-scrollbar-track {
-    background: rgba(212, 234, 209, 0.3);
-    border-radius: 3px;
-}
-
-#filters-panel::-webkit-scrollbar-thumb {
-    background: #6b9464;
-    border-radius: 3px;
-}
-
-#filters-panel::-webkit-scrollbar-thumb:hover {
-    background: #5a7d54;
-}
-
-/* ========================================
-   TOOLTIPS VISUALISATIONS
-   ======================================== */
-
-.viz-tooltip {
-    position: fixed;
-    background: rgba(45, 74, 43, 0.95);
-    color: white;
-    padding: 10px 15px;
-    border-radius: 6px;
-    font-family: 'PPLettraMono', monospace;
+    font-family: var(--font-light);
     font-weight: 200;
-    font-size: 12px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    z-index: 10000;
-    max-width: 250px;
+    position: relative;
+    z-index: 2;
 }
 
-.viz-tooltip.visible {
-    opacity: 1;
+/* ===== LÉGENDES ===== */
+.legend-box {
+    position: absolute;
+    background: var(--legend-bg);
+    color: var(--legend-text);
+    padding: 15px;
+    border-radius: 0;
+    font-size: 13px;
+    z-index: 100;
+    transition: all 0.3s ease;
+    font-family: var(--font-light);
+    font-weight: 200;
 }
 
-.viz-tooltip-title {
-    font-weight: 500;
-    margin-bottom: 6px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-    padding-bottom: 4px;
+.legend-top-right {
+    top: 20px;
+    right: 20px;
+    max-width: 200px;
 }
 
-.viz-tooltip-row {
-    margin: 4px 0;
+.legend-top-left {
+    top: 20px;
+    left: 20px;
+}
+
+.legend-bottom-right {
+    bottom: 20px;
+    right: 20px;
+    top: auto;
+}
+
+.legend-bottom-left {
+    bottom: 20px;
+    left: 20px;
     display: flex;
+    gap: 15px;
     align-items: center;
 }
 
-/* ========================================
-   TOOLTIPS CARTE
-   ======================================== */
+.legend-box.compact {
+    max-width: 150px;
+    font-size: 11px;
+    padding: 10px;
+}
 
+.legend-box.hidden {
+    display: none;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.legend-color-bar {
+    width: 40px;
+    height: 15px;
+    border-radius: 0;
+}
+
+.legend-separator {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== TOOLTIPS ===== */
 .map-tooltip {
-    position: fixed;
-    background: rgba(45, 74, 43, 0.95);
-    color: white;
-    padding: 10px 15px;
-    border-radius: 6px;
-    font-family: 'PPLettraMono', monospace;
-    font-weight: 200;
-    font-size: 12px;
+    position: absolute;
+    background: var(--tooltip-bg);
+    color: var(--tooltip-text);
+    padding: 12px 16px;
+    border-radius: 0;
     pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    z-index: 10000;
-    max-width: 250px;
+    z-index: 1000;
+    font-size: 13px;
+    line-height: 1.6;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    display: none;
+    font-family: var(--font-light);
+    font-weight: 200;
 }
 
 .map-tooltip.visible {
-    opacity: 1;
+    display: block;
 }
 
 .tooltip-title {
     font-weight: 500;
+    font-family: var(--font-medium);
     margin-bottom: 6px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-    padding-bottom: 4px;
+    font-size: 14px;
 }
 
 .tooltip-row {
     margin: 4px 0;
 }
 
-/* ========================================
-   ÉCRAN DE CHARGEMENT
-   ======================================== */
+.viz-tooltip {
+    position: absolute;
+    background: rgba(45, 74, 43, 0.95);
+    color: #ffffff;
+    padding: 10px 14px;
+    border-radius: 0;
+    pointer-events: none;
+    z-index: 100;
+    font-size: 12px;
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    display: none;
+    white-space: nowrap;
+    font-family: var(--font-light);
+    font-weight: 200;
+}
 
+.viz-tooltip.visible {
+    display: block;
+}
+
+.viz-tooltip-title {
+    font-weight: 500;
+    font-family: var(--font-medium);
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.viz-tooltip-row {
+    margin: 2px 0;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+    }
+}
+
+.zone-selected {
+    animation: pulse 0.6s ease-in-out 3;
+}
+
+/* ===== ÉCRAN DE CHARGEMENT ===== */
 .loading-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: #f5f9f0;
+    background: linear-gradient(135deg, #f5f9f0 0%, #e8f3dc 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: 10000;
+    font-family: var(--font-light);
+    font-weight: 200;
 }
 
 .loading-animation-container {
+    position: relative;
+    width: 600px;
     margin-bottom: 30px;
 }
 
 .loading-animation {
-    width: 200px;
-    height: auto;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .loading-title-fallback {
     display: none;
-    font-family: 'PPLettraMono', monospace;
-    font-weight: 500;
     font-size: 48px;
-    color: #6b9464;
+    font-weight: 500;
+    font-family: var(--font-medium);
+    color: #2d4a2b;
+    text-align: center;
+    line-height: 200px;
 }
 
 .loading-text {
-    font-family: 'PPLettraMono', monospace;
-    font-weight: 200;
-    font-size: 18px;
     color: #2d4a2b;
+    font-size: 18px;
+    margin-top: -50px;
     margin-bottom: 20px;
+    font-family: var(--font-light);
+    font-weight: 200;
 }
 
 .loading-bar {
     width: 300px;
     height: 6px;
-    background: rgba(107, 148, 100, 0.2);
-    border-radius: 3px;
+    background: rgba(45, 74, 43, 0.2);
+    border-radius: 0;
     overflow: hidden;
 }
 
 .loading-progress {
     height: 100%;
-    width: 0%;
+    width: 0;
     background: #6b9464;
-    transition: width 0.3s ease;
+    transition: width 0.1s linear;
 }
 
-/* ========================================
-   RESPONSIVE
-   ======================================== */
-
-@media (max-width: 1200px) {
-    #left-panel {
-        width: 65%;
-    }
-    
-    #right-panels {
-        width: 35%;
-    }
+/* ===== SCROLLBAR ===== */
+#filters-panel::-webkit-scrollbar {
+    width: 8px;
 }
 
-@media (max-width: 768px) {
-    #app-container {
-        flex-direction: column;
-    }
-    
-    #left-panel {
-        width: 100%;
-        height: 60%;
-    }
-    
-    #right-panels {
-        width: 100%;
-        height: 40%;
-    }
-    
-    #bottom-right-panel {
-        flex-direction: column;
-    }
+#filters-panel::-webkit-scrollbar-track {
+    background: rgba(107, 148, 100, 0.1);
+    border-radius: 0;
+}
+
+#filters-panel::-webkit-scrollbar-thumb {
+    background: var(--nature-accent);
+    border-radius: 0;
+}
+
+#filters-panel::-webkit-scrollbar-thumb:hover {
+    background: var(--nature-dark);
 }
