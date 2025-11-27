@@ -169,35 +169,35 @@ const CONSTANTS = {
     // Configuration des assets pour export GRID
     GRID_MONTHS: {
         image: 'grid_months.png',
-        width: 3280,
-        height: 142,
-        offsetLeft: 365,
+        width: 3273,
+        height: 150,
+        offsetLeft: 368,
         // Largeurs successives des 12 mois (en pixels)
         monthsWidth: [
-            238, 238, 240, 250, 242, 245,
-            235, 253, 248, 243, 237, 246
+            241, 247, 238, 245, 240, 247,
+            235, 243, 241, 245, 237, 245
         ]
     },
     
     GRID_POLLEN: {
         image: 'grid_pollen.png',
-        width: 3280,
-        height: 206,
-        pollenLabelOffset: 358,
+        width: 3273,
+        height: 202,
+        pollenLabelOffset: 364,
         // Pour chaque mois : largeur H1 (1-15) et H2 (16-fin)
         halfMonths: [
-            { h1: 121, h2: 117 }, // Janvier
-            { h1: 120, h2: 117 }, // Février
-            { h1: 123, h2: 118 }, // Mars
-            { h1: 129, h2: 118 }, // Avril
-            { h1: 121, h2: 121 }, // Mai
-            { h1: 118, h2: 124 }, // Juin
-            { h1: 124, h2: 120 }, // Juillet
-            { h1: 123, h2: 123 }, // Août
-            { h1: 120, h2: 125 }, // Septembre
-            { h1: 117, h2: 129 }, // Octobre
-            { h1: 124, h2: 119 }, // Novembre
-            { h1: 123, h2: 128 }  // Décembre
+            { h1: 120, h2: 120 }, // Janvier
+            { h1: 120, h2: 123 }, // Février
+            { h1: 122, h2: 118 }, // Mars
+            { h1: 123, h2: 123 }, // Avril
+            { h1: 118, h2: 123 }, // Mai
+            { h1: 121, h2: 123 }, // Juin
+            { h1: 118, h2: 121 }, // Juillet
+            { h1: 119, h2: 124 }, // Août
+            { h1: 120, h2: 120 }, // Septembre
+            { h1: 122, h2: 122 }, // Octobre
+            { h1: 118, h2: 121 }, // Novembre
+            { h1: 123, h2: 126 }  // Décembre
         ]
     },
     

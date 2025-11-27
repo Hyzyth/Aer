@@ -86,11 +86,11 @@ const ExportPanel = {
                 },
                 // Zone visuelle (grilles mois + pollens)
                 visual: {
-                    leftMargin: 1,
-                    rightMargin: 1,
+                    leftMargin: 3.3,
+                    rightMargin: 3.3,
                     topMargin: 38.3,
                     bottomMargin: 6.8,
-                    usableWidth: 100 - 1 * 2,
+                    usableWidth: 100 - 3.3 * 2,
                     usableHeight: 100 - 38.3 - 6.8
                 }
             }
