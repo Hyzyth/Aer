@@ -182,7 +182,7 @@ const CONSTANTS = {
     GRID_POLLEN: {
         image: 'grid_pollen.png',
         width: 3280,
-        height: 215,
+        height: 206,
         pollenLabelOffset: 358,
         // Pour chaque mois : largeur H1 (1-15) et H2 (16-fin)
         halfMonths: [
