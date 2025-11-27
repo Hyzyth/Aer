@@ -164,6 +164,63 @@ const CONSTANTS = {
         'BETULACEES': 3,
         'OLEACEES': 3,
         'POACEES': 4
+    },
+    
+    // Configuration des assets pour export GRID
+    GRID_MONTHS: {
+        image: 'grid_months.png',
+        width: 3280,
+        height: 142,
+        offsetLeft: 365,
+        // Largeurs successives des 12 mois (en pixels)
+        monthsWidth: [
+            238, 238, 240, 250, 242, 245,
+            235, 253, 248, 243, 237, 246
+        ]
+    },
+    
+    GRID_POLLEN: {
+        image: 'grid_pollen.png',
+        width: 3280,
+        height: 215,
+        pollenLabelOffset: 358,
+        // Pour chaque mois : largeur H1 (1-15) et H2 (16-fin)
+        halfMonths: [
+            { h1: 121, h2: 117 }, // Janvier
+            { h1: 120, h2: 117 }, // Février
+            { h1: 123, h2: 118 }, // Mars
+            { h1: 129, h2: 118 }, // Avril
+            { h1: 121, h2: 121 }, // Mai
+            { h1: 118, h2: 124 }, // Juin
+            { h1: 124, h2: 120 }, // Juillet
+            { h1: 123, h2: 123 }, // Août
+            { h1: 120, h2: 125 }, // Septembre
+            { h1: 117, h2: 129 }, // Octobre
+            { h1: 124, h2: 119 }, // Novembre
+            { h1: 123, h2: 128 }  // Décembre
+        ]
+    },
+    
+    // Ordre des layers pour l'export
+    EXPORT_LAYERS: {
+        grid: [
+            {
+                id: 'background',
+                description: 'Background export_grid.png',
+                type: 'image',
+                source: 'export_grid.png'
+            },
+            {
+                id: 'structure',
+                description: 'Placement des backgrounds grid_months et grid_pollen',
+                type: 'image'
+            },
+            {
+                id: 'content',
+                description: 'Textes, légendes, données des cellules',
+                type: 'draw'
+            }
+        ]
     }
 };
 
@@ -181,3 +238,5 @@ console.log('%c[Constants] ⚙️ Configuration chargée', 'color: #6b9464; font
 console.log(`[Constants] Mode par défaut: ${CONSTANTS.DEFAULT_MODE}`);
 console.log(`[Constants] Tile par défaut: ${CONSTANTS.MAP.DEFAULT_TILE}`);
 console.log(`[Constants] Lissage stream graph: fenêtre de ${CONSTANTS.AREA.SMOOTHING_WINDOW} mesures`);
+console.log(`[Constants] ✓ GRID_MONTHS configuré: ${CONSTANTS.GRID_MONTHS.image} (${CONSTANTS.GRID_MONTHS.width}x${CONSTANTS.GRID_MONTHS.height}px)`);
+console.log(`[Constants] ✓ GRID_POLLEN configuré: ${CONSTANTS.GRID_POLLEN.image} (${CONSTANTS.GRID_POLLEN.width}x${CONSTANTS.GRID_POLLEN.height}px)`);
