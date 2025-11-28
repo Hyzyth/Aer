@@ -1,7 +1,6 @@
 /**
  * radialCalendar.js - Visualisation en flux calendaire radial
- * Affiche les données polliniques dans un format circulaire annuel
- * Utilise radial.png comme zone stylisée pour les mois
+ * Version avec nouvelle palette
  */
 
 const RadialCalendar = {
@@ -13,14 +12,14 @@ const RadialCalendar = {
     animator: null,
     tooltipElement: null,
     currentProgress: 0,
-    radialImage: null, // Image du cercle des mois
+    radialImage: null,
     radialImageLoaded: false,
     
     /**
-     * Initialise le canvas et les composants
+     * Initialise le canvas
      */
     initialize(container) {
-        console.log('[RadialCalendar] Initialisation...');
+        console.log('[RadialCalendar] 🎯 Initialisation...');
         this.canvas = document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d');
         container.appendChild(this.canvas);
@@ -31,24 +30,24 @@ const RadialCalendar = {
         this.resize();
         window.addEventListener('resize', () => this.resize());
         
-        // Événements de souris pour le tooltip
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('mouseleave', () => this.hideTooltip());
         
         this.animator = AnimationUtils.createAnimator(CONSTANTS.ANIMATION.TRANSITION_DURATION);
+        console.log('[RadialCalendar] ✓ Initialisé');
     },
     
     /**
-     * Charge l'image du cercle des mois
+     * Charge l'image radiale
      */
     loadRadialImage() {
         this.radialImage = new Image();
         this.radialImage.onload = () => {
             this.radialImageLoaded = true;
-            console.log('[RadialCalendar] Image radiale chargée: radial.png');
+            console.log('[RadialCalendar] ✓ Image radiale chargée');
         };
         this.radialImage.onerror = () => {
-            console.warn('[RadialCalendar] Image radiale non trouvée: radial.png');
+            console.warn('[RadialCalendar] ⚠️ Image radiale non trouvée');
             this.radialImageLoaded = false;
         };
         this.radialImage.src = CONSTANTS.PATHS.BACKGROUNDS + CONSTANTS.RADIAL.BACKGROUND_IMAGE;
@@ -71,7 +70,7 @@ const RadialCalendar = {
     },
     
     /**
-     * Gère le survol de la souris avec tooltip collé au curseur
+     * Gère le survol de la souris
      */
     handleMouseMove(e) {
         if (!AppState.selectedZone || AppState.currentMeasures.length === 0) {
@@ -83,34 +82,26 @@ const RadialCalendar = {
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
         
-        // Calculer la position polaire de la souris
         const dx = mouseX - this.centerX;
         const dy = mouseY - this.centerY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         let angle = Math.atan2(dy, dx);
         
-        // Ajuster l'angle pour correspondre au système du calendrier
         angle = angle - CONSTANTS.RADIAL.START_ANGLE;
         if (angle < 0) angle += Math.PI * 2;
         
         const innerRadius = this.radius * CONSTANTS.RADIAL.INNER_RADIUS_RATIO;
         
-        // Vérifier si la souris est dans la zone du calendrier
         if (distance >= innerRadius && distance <= this.radius) {
             const activePollens = AppState.getActivePollens();
-            
-            // Calculer l'anneau survolé
             const ringSpace = (this.radius - innerRadius) / activePollens.length;
             const ringIndex = Math.floor((distance - innerRadius) / ringSpace);
             
             if (ringIndex >= 0 && ringIndex < activePollens.length) {
                 const pollen = activePollens[ringIndex];
-                
-                // Calculer la date correspondant à l'angle
                 const yearProgress = angle / (Math.PI * 2);
                 const measureIndex = Math.floor(yearProgress * AppState.currentMeasures.length);
                 
-                // Vérifier si cette mesure a déjà été affichée
                 if (measureIndex > AppState.currentMeasureIndex) {
                     this.hideTooltip();
                     return;
@@ -121,7 +112,6 @@ const RadialCalendar = {
                     const code = POLLEN_TO_CSV_CODE[pollen];
                     const value = measure[code] || 0;
                     
-                    // Afficher le tooltip collé au curseur
                     this.showTooltip(e.clientX, e.clientY, {
                         date: DataUtils.formatDate(measure.date_ech, 'full'),
                         pollen: pollen,
@@ -140,7 +130,7 @@ const RadialCalendar = {
     },
     
     /**
-     * Affiche le tooltip collé au curseur
+     * Affiche le tooltip
      */
     showTooltip(x, y, data) {
         let html = `<div class="viz-tooltip-title">${data.date}</div>`;
@@ -157,8 +147,6 @@ const RadialCalendar = {
         
         this.tooltipElement.innerHTML = html;
         this.tooltipElement.classList.add('visible');
-        
-        // Collé au curseur
         this.tooltipElement.style.left = x + 'px';
         this.tooltipElement.style.top = y + 'px';
     },
@@ -170,10 +158,15 @@ const RadialCalendar = {
     },
     
     /**
-     * Calcule le rayon optimal pour maximiser l'espace disponible
+     * Calcule le rayon optimal pour maximiser l'espace
      */
     calculateOptimalRadius() {
-        return Math.min(this.canvas.width, this.canvas.height) * 0.42;
+        // Utiliser la hauteur disponible complète
+        const availableHeight = this.canvas.height;
+        const availableWidth = this.canvas.width;
+        
+        // Prendre en compte l'espace pour les labels (8% de marge)
+        return Math.min(availableWidth, availableHeight) * 0.42;
     },
     
     /**
@@ -183,7 +176,7 @@ const RadialCalendar = {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Fond
-        this.ctx.fillStyle = '#c8d4d0';
+        this.ctx.fillStyle = PALETTE.UI.BG_COLOR;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         if (!AppState.selectedZone || AppState.currentMeasures.length === 0) {
@@ -194,15 +187,14 @@ const RadialCalendar = {
         this.currentProgress = AppState.currentMeasureIndex;
         this.radius = this.calculateOptimalRadius();
         
-        // Dessiner l'image radiale si chargée (zone des mois)
+        // Image radiale
         if (this.radialImageLoaded && this.radialImage) {
             this.drawRadialImage();
         } else {
-            // Fallback: segments mensuels basiques
             this.drawMonthSegments();
         }
         
-        // Dessiner les anneaux de pollens
+        // Anneaux de pollens
         const activePollens = AppState.getActivePollens();
         const measuresUpTo = DataUtils.getMeasuresUpTo(
             AppState.currentMeasures,
@@ -213,34 +205,35 @@ const RadialCalendar = {
             this.drawPollenRing(pollen, index, activePollens.length, measuresUpTo);
         });
         
-        // Dessiner les labels des mois PAR DESSUS l'image
+        // Labels des mois
         this.drawMonthLabels();
     },
     
     /**
-     * Dessine l'image radiale (cercle stylisé des mois)
+     * Dessine l'image radiale
      */
     drawRadialImage() {
-        const imgSize = this.radius * 2.3; // Taille de l'image
+        const imgSize = this.radius * 2.3;
         const imgX = this.centerX - imgSize / 2;
         const imgY = this.centerY - imgSize / 2;
         
         this.ctx.save();
-        this.ctx.globalAlpha = 0.8; // Légère transparence pour voir les données dessous
+        this.ctx.globalAlpha = 0.8;
         this.ctx.drawImage(this.radialImage, imgX, imgY, imgSize, imgSize);
         this.ctx.restore();
     },
     
     drawPlaceholder() {
-        this.ctx.fillStyle = PALETTE.UI.NATURE_DARK;
-        this.ctx.font = '20px sans-serif';
+        this.ctx.fillStyle = PALETTE.UI.TEXT_COLOR;
+        this.ctx.font = '20px PPLettraMono';
+        this.ctx.fontWeight = '200';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillText('Sélectionnez une zone sur la carte', this.centerX, this.centerY);
     },
     
     /**
-     * Dessine les segments mensuels (fallback si pas d'image)
+     * Dessine les segments mensuels (fallback)
      */
     drawMonthSegments() {
         const innerRadius = this.radius * CONSTANTS.RADIAL.INNER_RADIUS_RATIO;
@@ -250,7 +243,7 @@ const RadialCalendar = {
         for (let i = 0; i < CONSTANTS.RADIAL.SEGMENTS; i++) {
             const angle1 = startAngle + angleStep * i;
             
-            this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.NATURE_DARK, 0.2);
+            this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.TEXT_COLOR, 0.2);
             this.ctx.lineWidth = 1;
             this.ctx.beginPath();
             this.ctx.moveTo(
@@ -267,7 +260,7 @@ const RadialCalendar = {
         const steps = 8;
         for (let i = 0; i <= steps; i++) {
             const r = innerRadius + (this.radius - innerRadius) * (i / steps);
-            this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.NATURE_DARK, 0.08);
+            this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.TEXT_COLOR, 0.08);
             this.ctx.lineWidth = 1;
             this.ctx.beginPath();
             this.ctx.arc(this.centerX, this.centerY, r, 0, Math.PI * 2);
@@ -276,13 +269,12 @@ const RadialCalendar = {
     },
     
     /**
-     * Dessine un anneau de pollen avec toutes les mesures
+     * Dessine un anneau de pollen
      */
     drawPollenRing(pollenName, ringIndex, totalRings, measures) {
         const code = POLLEN_TO_CSV_CODE[pollenName];
         const color = getPollenColor(pollenName);
         
-        // Calculer les rayons de l'anneau
         const innerRadius = this.radius * CONSTANTS.RADIAL.INNER_RADIUS_RATIO;
         const ringSpace = (this.radius - innerRadius) / totalRings;
         const ringInnerRadius = innerRadius + ringIndex * ringSpace;
@@ -293,7 +285,6 @@ const RadialCalendar = {
         const yearEnd = new Date(yearStart.getFullYear(), 11, 31, 23, 59, 59);
         const yearDuration = yearEnd - yearStart;
         
-        // Créer les points pour toutes les mesures
         const points = [];
         measures.forEach((measure) => {
             const date = new Date(measure.date_ech);
@@ -315,27 +306,24 @@ const RadialCalendar = {
         
         if (points.length === 0) return;
         
-        // Dessiner l'aire
         this.ctx.fillStyle = ColorUtils.toRgba(color, 0.4);
         this.ctx.strokeStyle = ColorUtils.toRgba(color, 0.8);
         this.ctx.lineWidth = 2;
-        
         this.ctx.beginPath();
         
-        // Tracer le contour extérieur
-        points.forEach((point, i) => {
+        // Tracer le bord supérieur
+        for (let i = 0; i < points.length; i++) {
             if (i === 0) {
-                this.ctx.moveTo(point.x, point.y);
+                this.ctx.moveTo(points[i].x, points[i].y);
             } else {
-                this.ctx.lineTo(point.x, point.y);
+                this.ctx.lineTo(points[i].x, points[i].y);
             }
-        });
+        }
         
-        // Fermer en repassant par le rayon intérieur
+        // Tracer le bord inférieur
         if (points.length > 0) {
             const lastAngle = points[points.length - 1].angle;
             const firstAngle = points[0].angle;
-            
             this.ctx.arc(this.centerX, this.centerY, ringInnerRadius, lastAngle, firstAngle, true);
         }
         
@@ -343,7 +331,7 @@ const RadialCalendar = {
         this.ctx.fill();
         this.ctx.stroke();
         
-        // Cercles de guidage (optionnel, légèrement visibles)
+        // Cercles de guidage
         this.ctx.strokeStyle = ColorUtils.toRgba(color, 0.15);
         this.ctx.lineWidth = 1;
         this.ctx.setLineDash([3, 3]);
@@ -360,35 +348,35 @@ const RadialCalendar = {
     },
     
     /**
-     * Dessine les labels des mois (PAR DESSUS l'image radiale)
+     * Dessine les labels des mois
      */
     drawMonthLabels() {
-    const labelRadius = this.radius * 1.08;
-    const startAngle = CONSTANTS.RADIAL.START_ANGLE;
-    const angleStep = (Math.PI * 2) / CONSTANTS.RADIAL.SEGMENTS;
-    
-    this.ctx.fillStyle = PALETTE.UI.NATURE_DARK;
-    this.ctx.font = '14px PPLettraMono';
-    this.ctx.fontWeight = '200'; // Ultralight
-    this.ctx.textAlign = 'center';
-    this.ctx.textBaseline = 'middle';
-    
-    for (let i = 0; i < CONSTANTS.RADIAL.SEGMENTS; i++) {
-        const angle = startAngle + angleStep * (i + 0.5);
-        const x = this.centerX + labelRadius * Math.cos(angle);
-        const y = this.centerY + labelRadius * Math.sin(angle);
+        const labelRadius = this.radius * 1.08;
+        const startAngle = CONSTANTS.RADIAL.START_ANGLE;
+        const angleStep = (Math.PI * 2) / CONSTANTS.RADIAL.SEGMENTS;
         
-        this.ctx.save();
-        this.ctx.translate(x, y);
+        this.ctx.fillStyle = PALETTE.UI.TEXT_COLOR;
+        this.ctx.font = '14px PPLettraMono';
+        this.ctx.fontWeight = '200';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
         
-        let textAngle = angle + Math.PI / 2;
-        if (textAngle > Math.PI / 2 && textAngle < Math.PI * 1.5) {
-            textAngle += Math.PI;
+        for (let i = 0; i < CONSTANTS.RADIAL.SEGMENTS; i++) {
+            const angle = startAngle + angleStep * (i + 0.5);
+            const x = this.centerX + labelRadius * Math.cos(angle);
+            const y = this.centerY + labelRadius * Math.sin(angle);
+            
+            this.ctx.save();
+            this.ctx.translate(x, y);
+            
+            let textAngle = angle + Math.PI / 2;
+            if (textAngle > Math.PI / 2 && textAngle < Math.PI * 1.5) {
+                textAngle += Math.PI;
             }
-        this.ctx.rotate(textAngle);
-        
-        this.ctx.fillText(CONSTANTS.MONTHS_SHORT[i], 0, 0);
-        this.ctx.restore();
+            this.ctx.rotate(textAngle);
+            
+            this.ctx.fillText(CONSTANTS.MONTHS_SHORT[i], 0, 0);
+            this.ctx.restore();
         }
     },
     
@@ -399,6 +387,6 @@ const RadialCalendar = {
         if (this.tooltipElement && this.tooltipElement.parentElement) {
             this.tooltipElement.parentElement.removeChild(this.tooltipElement);
         }
-        console.log('[RadialCalendar] Détruit');
+        console.log('[RadialCalendar] 🗑️ Détruit');
     }
 };

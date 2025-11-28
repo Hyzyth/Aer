@@ -1,7 +1,6 @@
 /**
- * PlantingGrid.js - Visualisation en grille de plantation moderne
- * Affiche les données polliniques dans une grille mensuelle avec style contemporain
- * Toutes les dimensions sont calculées pour s'adapter au panel sans débordement
+ * plantingGrid.js - Visualisation en grille de plantation
+ * Version avec nouvelle palette
  */
 
 const PlantingGrid = {
@@ -12,9 +11,10 @@ const PlantingGrid = {
     tooltipElement: null,
     
     /**
-     * Initialise le canvas et les composants
+     * Initialise le canvas
      */
     initialize(container) {
+        console.log('[PlantingGrid] 📊 Initialisation...');
         this.canvas = document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d');
         container.appendChild(this.canvas);
@@ -24,11 +24,11 @@ const PlantingGrid = {
         this.resize();
         window.addEventListener('resize', () => this.resize());
         
-        // Événements de souris pour le tooltip
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('mouseleave', () => this.hideTooltip());
         
         this.animator = AnimationUtils.createSmoothTransition(0);
+        console.log('[PlantingGrid] ✓ Initialisé');
     },
     
     resize() {
@@ -44,7 +44,7 @@ const PlantingGrid = {
     },
     
     /**
-     * Gère le survol de la souris avec tooltip collé au curseur
+     * Gère le survol de la souris
      */
     handleMouseMove(e) {
         if (!AppState.selectedZone || AppState.currentMeasures.length === 0) {
@@ -56,7 +56,6 @@ const PlantingGrid = {
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
         
-        // Calculer les dimensions optimales de la grille
         const activePollens = AppState.getActivePollens();
         const gridMetrics = this.calculateGridMetrics(activePollens.length);
         
@@ -67,7 +66,6 @@ const PlantingGrid = {
         const gridWidth = gridMetrics.gridWidth;
         const gridHeight = gridMetrics.gridHeight;
         
-        // Vérifier si la souris est dans la grille
         if (mouseX >= startX && mouseX <= startX + gridWidth &&
             mouseY >= startY && mouseY <= startY + gridHeight) {
             
@@ -93,7 +91,6 @@ const PlantingGrid = {
                 
                 const value = halfMonthlyData[halfMonthIndex] || 0;
                 
-                // Tooltip collé au curseur
                 this.showTooltip(e.clientX, e.clientY, {
                     pollen: pollen,
                     month: CONSTANTS.MONTHS[col],
@@ -118,7 +115,7 @@ const PlantingGrid = {
     },
     
     /**
-     * Affiche le tooltip collé au curseur (offset 0px)
+     * Affiche le tooltip
      */
     showTooltip(x, y, data) {
         this.tooltipElement.innerHTML = `
@@ -128,8 +125,6 @@ const PlantingGrid = {
         `;
         
         this.tooltipElement.classList.add('visible');
-        
-        // Collé au curseur
         this.tooltipElement.style.left = x + 'px';
         this.tooltipElement.style.top = y + 'px';
     },
@@ -141,31 +136,23 @@ const PlantingGrid = {
     },
     
     /**
-     * Calcule les métriques de la grille de manière optimale
-     * Toutes les dimensions sont calculées pour éviter tout débordement
+     * Calcule les métriques de la grille
      */
     calculateGridMetrics(numPollens) {
         const padding = 50;
-        const labelWidth = 120; // Largeur des labels de pollens à gauche
-        const legendWidth = 110; // Largeur de la légende à droite
-        const headerHeight = 35; // Hauteur des en-têtes
+        const labelWidth = 120;
+        const legendWidth = 110;
+        const headerHeight = 35;
         
         const availableWidth = this.canvas.width - padding * 2 - labelWidth - legendWidth;
         const availableHeight = this.canvas.height - padding * 2 - headerHeight - 20;
         
-        // Calculer la largeur de colonne pour remplir l'espace
         const colWidth = availableWidth / CONSTANTS.GRID.MONTHS;
-        
-        // Calculer la hauteur de ligne pour remplir l'espace
-        const rowHeight = Math.min(
-            availableHeight / numPollens,
-            70 // Hauteur maximale pour éviter les lignes trop grandes
-        );
+        const rowHeight = Math.min(availableHeight / numPollens, 70);
         
         const gridWidth = colWidth * CONSTANTS.GRID.MONTHS;
         const gridHeight = rowHeight * numPollens;
         
-        // Position de départ avec labels à gauche
         const startX = padding + labelWidth;
         const startY = (this.canvas.height - gridHeight) / 2 + headerHeight;
         
@@ -186,8 +173,8 @@ const PlantingGrid = {
     draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Fond plus sombre
-        this.ctx.fillStyle = '#d8e0d8';
+        // Fond
+        this.ctx.fillStyle = PALETTE.UI.BG_COLOR;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         if (!AppState.selectedZone || AppState.currentMeasures.length === 0) {
@@ -195,7 +182,6 @@ const PlantingGrid = {
             return;
         }
         
-        // Mettre à jour la progression
         const targetProgress = AppState.currentMeasureIndex / AppState.currentMeasures.length;
         this.animator.setTarget(targetProgress);
         this.currentProgress = this.animator.update();
@@ -203,68 +189,60 @@ const PlantingGrid = {
         const activePollens = AppState.getActivePollens();
         const metrics = this.calculateGridMetrics(activePollens.length);
         
-        // Dessiner les en-têtes des mois
         this.drawMonthHeaders(metrics);
         
-        // Dessiner chaque ligne de pollen
         activePollens.forEach((pollen, rowIndex) => {
             this.drawPollenRow(pollen, rowIndex, metrics);
         });
         
-        // Dessiner la ligne de progression
         this.drawProgressLine(metrics);
-        
-        // Dessiner la légende de qualité
         this.drawQualityLegend(metrics);
     },
     
     drawPlaceholder() {
-        this.ctx.fillStyle = PALETTE.UI.NATURE_DARK;
-        this.ctx.font = '20px sans-serif';
+        this.ctx.fillStyle = PALETTE.UI.TEXT_COLOR;
+        this.ctx.font = '20px PPLettraMono';
+        this.ctx.fontWeight = '200';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillText('Sélectionnez une zone sur la carte', this.canvas.width / 2, this.canvas.height / 2);
     },
     
     /**
-     * Dessine les en-têtes de mois modernes
+     * Dessine les en-têtes de mois
      */
     drawMonthHeaders(metrics) {
         const { startX, startY, colWidth, headerHeight } = metrics;
         const headerY = startY - headerHeight - 5;
         
         this.ctx.font = 'bold 12px PPLettraMono';
-        this.ctx.fontWeight = '500'; // Medium
+        this.ctx.fontWeight = '500';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         
         for (let month = 0; month < CONSTANTS.GRID.MONTHS; month++) {
             const cellX = startX + month * colWidth;
             
-            // Fond avec dégradé subtil
             const gradient = this.ctx.createLinearGradient(cellX, headerY, cellX, headerY + headerHeight);
-            gradient.addColorStop(0, ColorUtils.toRgba(PALETTE.UI.NATURE_ACCENT, 0.25));
-            gradient.addColorStop(1, ColorUtils.toRgba(PALETTE.UI.NATURE_ACCENT, 0.15));
+            gradient.addColorStop(0, ColorUtils.toRgba(PALETTE.UI.ACCENT, 0.25));
+            gradient.addColorStop(1, ColorUtils.toRgba(PALETTE.UI.ACCENT, 0.15));
             this.ctx.fillStyle = gradient;
             
-            // Coins arrondis
             this.roundRect(cellX + 2, headerY, colWidth - 4, headerHeight, 6);
             this.ctx.fill();
             
-            // Bordure légère
-            this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.NATURE_DARK, 0.2);
+            this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.TEXT_COLOR, 0.2);
             this.ctx.lineWidth = 1;
             this.roundRect(cellX + 2, headerY, colWidth - 4, headerHeight, 6);
             this.ctx.stroke();
             
-            // Texte
-            this.ctx.fillStyle = PALETTE.UI.NATURE_DARK;
+            this.ctx.fillStyle = PALETTE.UI.TEXT_COLOR;
             this.ctx.fillText(CONSTANTS.MONTHS_SHORT[month], cellX + colWidth / 2, headerY + headerHeight / 2);
         }
     },
     
     /**
-     * Dessine une ligne de pollen avec style moderne
+     * Dessine une ligne de pollen
      */
     drawPollenRow(pollenName, rowIndex, metrics) {
         const { startX, startY, colWidth, rowHeight, padding, labelWidth } = metrics;
@@ -272,13 +250,12 @@ const PlantingGrid = {
         
         const pollenColor = getPollenColor(pollenName);
         
-        // Label du pollen à gauche avec design moderne
+        // Label du pollen
         const labelX = padding;
         const labelY = y + 4;
         const labelW = labelWidth - 10;
         const labelH = rowHeight - 8;
         
-        // Fond avec dégradé
         const gradient = this.ctx.createLinearGradient(labelX, labelY, labelX + labelW, labelY);
         gradient.addColorStop(0, ColorUtils.toRgba(pollenColor, 0.15));
         gradient.addColorStop(1, ColorUtils.toRgba(pollenColor, 0.05));
@@ -287,30 +264,26 @@ const PlantingGrid = {
         this.roundRect(labelX, labelY, labelW, labelH, 8);
         this.ctx.fill();
         
-        // Bordure accentuée
         this.ctx.strokeStyle = ColorUtils.toRgba(pollenColor, 0.6);
         this.ctx.lineWidth = 2.5;
         this.roundRect(labelX, labelY, labelW, labelH, 8);
         this.ctx.stroke();
         
-        // Texte du label
-        this.ctx.fillStyle = PALETTE.UI.NATURE_DARK;
+        this.ctx.fillStyle = PALETTE.UI.TEXT_COLOR;
         this.ctx.font = 'bold 12px PPLettraMono';
-        this.ctx.fontWeight = '500'; // Medium
+        this.ctx.fontWeight = '500';
         this.ctx.textAlign = 'right';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillText(pollenName.toUpperCase(), labelX + labelW - 8, y + rowHeight / 2);
         
-        // Calculer les moyennes par demi-mois
+        // Cellules de données
         const halfMonthlyData = DataUtils.getHalfMonthlyAverages(
             AppState.currentMeasures,
             pollenName
         );
         
-        // Dessiner les cellules avec style moderne
         for (let month = 0; month < CONSTANTS.GRID.MONTHS; month++) {
-            // Ligne de séparation entre mois
-            this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.NATURE_DARK, 0.25);
+            this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.TEXT_COLOR, 0.25);
             this.ctx.lineWidth = 1.5;
             this.ctx.beginPath();
             this.ctx.moveTo(startX + month * colWidth, y);
@@ -331,28 +304,24 @@ const PlantingGrid = {
                 
                 const cellColor = this.getQualityColor(value);
                 
-                // Dégradé subtil pour les cellules
                 const cellGradient = this.ctx.createLinearGradient(cellX, cellY, cellX, cellY + cellHeight);
                 cellGradient.addColorStop(0, cellColor);
                 cellGradient.addColorStop(1, ColorUtils.darken(cellColor, 0.1));
                 this.ctx.fillStyle = cellGradient;
                 
-                // Coins arrondis pour les cellules
                 this.roundRect(cellX, cellY, cellWidth, cellHeight, 4);
                 this.ctx.fill();
                 
-                // Bordure légère
                 this.ctx.strokeStyle = half === 0 
-                    ? ColorUtils.toRgba(PALETTE.UI.NATURE_DARK, 0.3)
-                    : ColorUtils.toRgba(PALETTE.UI.NATURE_DARK, 0.15);
+                    ? ColorUtils.toRgba(PALETTE.UI.TEXT_COLOR, 0.3)
+                    : ColorUtils.toRgba(PALETTE.UI.TEXT_COLOR, 0.15);
                 this.ctx.lineWidth = half === 0 ? 1.5 : 1;
                 this.roundRect(cellX, cellY, cellWidth, cellHeight, 4);
                 this.ctx.stroke();
             }
         }
         
-        // Ligne finale
-        this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.NATURE_DARK, 0.25);
+        this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.TEXT_COLOR, 0.25);
         this.ctx.lineWidth = 1.5;
         this.ctx.beginPath();
         this.ctx.moveTo(startX + CONSTANTS.GRID.MONTHS * colWidth, y);
@@ -361,7 +330,7 @@ const PlantingGrid = {
     },
     
     /**
-     * Fonction utilitaire pour dessiner des rectangles aux coins arrondis
+     * Dessine un rectangle aux coins arrondis
      */
     roundRect(x, y, width, height, radius) {
         this.ctx.beginPath();
@@ -399,13 +368,12 @@ const PlantingGrid = {
     },
     
     /**
-     * Ligne de progression moderne
+     * Dessine la ligne de progression
      */
     drawProgressLine(metrics) {
         const { startX, startY, gridWidth, gridHeight } = metrics;
         const lineX = startX + gridWidth * this.currentProgress;
         
-        // Ombre de la ligne
         this.ctx.strokeStyle = ColorUtils.toRgba('#000000', 0.1);
         this.ctx.lineWidth = 4;
         this.ctx.setLineDash([6, 4]);
@@ -414,8 +382,7 @@ const PlantingGrid = {
         this.ctx.lineTo(lineX + 1, startY + gridHeight + 10);
         this.ctx.stroke();
         
-        // Ligne principale
-        this.ctx.strokeStyle = PALETTE.UI.NATURE_ACCENT;
+        this.ctx.strokeStyle = PALETTE.UI.ACCENT;
         this.ctx.lineWidth = 3;
         this.ctx.setLineDash([6, 4]);
         this.ctx.beginPath();
@@ -424,18 +391,16 @@ const PlantingGrid = {
         this.ctx.stroke();
         this.ctx.setLineDash([]);
         
-        // Point en haut avec ombre
         this.ctx.fillStyle = ColorUtils.toRgba('#000000', 0.2);
         this.ctx.beginPath();
         this.ctx.arc(lineX + 1, startY - 25, 6, 0, Math.PI * 2);
         this.ctx.fill();
         
-        this.ctx.fillStyle = PALETTE.UI.NATURE_ACCENT;
+        this.ctx.fillStyle = PALETTE.UI.ACCENT;
         this.ctx.beginPath();
         this.ctx.arc(lineX, startY - 25, 6, 0, Math.PI * 2);
         this.ctx.fill();
         
-        // Bordure blanche
         this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 2;
         this.ctx.beginPath();
@@ -444,7 +409,7 @@ const PlantingGrid = {
     },
     
     /**
-     * Légende de qualité moderne - positionnée dans l'espace réservé
+     * Dessine la légende de qualité
      */
     drawQualityLegend(metrics) {
         const { startX, startY, gridWidth, gridHeight, legendWidth } = metrics;
@@ -452,7 +417,6 @@ const PlantingGrid = {
         const legendHeight = Math.min(200, gridHeight);
         const y = startY + (gridHeight - legendHeight) / 2;
         
-        // Fond avec ombre
         this.ctx.fillStyle = ColorUtils.toRgba('#000000', 0.05);
         this.roundRect(x + 2, y + 2, legendWidth - 20, legendHeight, 8);
         this.ctx.fill();
@@ -461,16 +425,14 @@ const PlantingGrid = {
         this.roundRect(x, y, legendWidth - 20, legendHeight, 8);
         this.ctx.fill();
         
-        // Bordure
-        this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.NATURE_DARK, 0.2);
+        this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.TEXT_COLOR, 0.2);
         this.ctx.lineWidth = 1.5;
         this.roundRect(x, y, legendWidth - 20, legendHeight, 8);
         this.ctx.stroke();
         
-        // Titre
-        this.ctx.fillStyle = PALETTE.UI.NATURE_DARK;
+        this.ctx.fillStyle = PALETTE.UI.TEXT_COLOR;
         this.ctx.font = 'bold 11px PPLettraMono';
-        this.ctx.fontWeight = '500'; // Medium
+        this.ctx.fontWeight = '500';
         this.ctx.textAlign = 'left';
         this.ctx.fillText('Qualité', x + 10, y + 18);
         
@@ -482,20 +444,18 @@ const PlantingGrid = {
             const color = PALETTE.QUALITY[qualityLevel].color;
             const label = PALETTE.QUALITY[qualityLevel].label;
             
-            // Carré de couleur avec coins arrondis
             this.ctx.fillStyle = color;
             this.roundRect(x + 10, itemY, 28, itemHeight - 4, 3);
             this.ctx.fill();
             
-            this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.NATURE_DARK, 0.3);
+            this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.TEXT_COLOR, 0.3);
             this.ctx.lineWidth = 1;
             this.roundRect(x + 10, itemY, 28, itemHeight - 4, 3);
             this.ctx.stroke();
             
-            // Texte compact
-            this.ctx.fillStyle = PALETTE.UI.NATURE_DARK;
+            this.ctx.fillStyle = PALETTE.UI.TEXT_COLOR;
             this.ctx.font = '9px PPLettraMono';
-            this.ctx.fontWeight = '200'; // Ultralight
+            this.ctx.fontWeight = '200';
             this.ctx.textAlign = 'left';
             this.ctx.fillText(`${qualityLevel}`, x + 42, itemY + (itemHeight - 4) / 2);
             this.ctx.fillText(label, x + 50, itemY + (itemHeight - 4) / 2);
@@ -509,5 +469,6 @@ const PlantingGrid = {
         if (this.tooltipElement && this.tooltipElement.parentElement) {
             this.tooltipElement.parentElement.removeChild(this.tooltipElement);
         }
+        console.log('[PlantingGrid] 🗑️ Détruit');
     }
 };

@@ -1,19 +1,26 @@
-// Tooltip.js - Gestion des infobulles
-
+/**
+ * tooltip.js - Gestion des infobulles
+ * Version avec nouvelle palette
+ */
 const Tooltip = {
     element: null,
     
+    /**
+     * Initialise le tooltip
+     */
     initialize() {
-        // Créer l'élément tooltip
         this.element = document.createElement('div');
         this.element.className = 'map-tooltip';
-        document.body.appendChild(this.element);
+        document.body.appendChild(this.element); // CORRECTION ICI
+        console.log('[Tooltip] ✓ Initialisé');
     },
     
+    /**
+     * Affiche le tooltip avec des données
+     */
     show(x, y, data) {
         if (!this.element) this.initialize();
         
-        // Construire le contenu
         let html = '';
         
         if (data.title) {
@@ -28,14 +35,12 @@ const Tooltip = {
         
         this.element.innerHTML = html;
         
-        // Positionner
-        const offsetX = CONSTANTS.TOOLTIP.OFFSET_X;
-        const offsetY = CONSTANTS.TOOLTIP.OFFSET_Y;
+        const offsetX = 15;
+        const offsetY = 15;
         
         let left = x + offsetX;
         let top = y + offsetY;
         
-        // Ajuster si le tooltip sort de l'écran
         this.element.classList.add('visible');
         const rect = this.element.getBoundingClientRect();
         
@@ -50,22 +55,19 @@ const Tooltip = {
         this.element.style.top = `${top}px`;
     },
     
+    /**
+     * Masque le tooltip
+     */
     hide() {
         if (this.element) {
             this.element.classList.remove('visible');
         }
     },
     
-    showZoneInfo(x, y, zoneStats, themeColors) {
-        const bgColor = themeColors?.tooltip || PALETTE.UI.TOOLTIP_BG;
-        const textColor = themeColors?.tooltipText || PALETTE.UI.TOOLTIP_TEXT;
-        
-        // Mettre à jour les couleurs du tooltip
-        if (this.element) {
-            this.element.style.background = bgColor;
-            this.element.style.color = textColor;
-        }
-        
+    /**
+     * Affiche les informations d'une zone
+     */
+    showZoneInfo(x, y, zoneStats) {
         const data = {
             title: zoneStats.name,
             rows: [
@@ -79,10 +81,13 @@ const Tooltip = {
         this.show(x, y, data);
     },
     
+    /**
+     * Met à jour la position du tooltip
+     */
     update(x, y) {
         if (this.element && this.element.classList.contains('visible')) {
-            const offsetX = CONSTANTS.TOOLTIP.OFFSET_X;
-            const offsetY = CONSTANTS.TOOLTIP.OFFSET_Y;
+            const offsetX = 15;
+            const offsetY = 15;
             
             this.element.style.left = `${x + offsetX}px`;
             this.element.style.top = `${y + offsetY}px`;

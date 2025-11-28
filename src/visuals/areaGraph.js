@@ -1,7 +1,6 @@
 /**
- * areaGraph.js - Visualisation en stream graph avec lissage adaptatif
- * Animation progressive de gauche à droite, point par point
- * Lissage par moyenne mobile pour améliorer la lisibilité
+ * areaGraph.js - Visualisation en stream graph
+ * Version avec nouvelle palette
  */
 
 const AreaGraph = {
@@ -10,13 +9,13 @@ const AreaGraph = {
     tooltipElement: null,
     cursorX: null,
     hoveredPollenIndex: null,
-    smoothedData: null, // Données lissées pour l'affichage
+    smoothedData: null,
     
     /**
-     * Initialise le canvas et les composants
+     * Initialise le canvas
      */
     initialize(container) {
-        console.log('[AreaGraph] Initialisation...');
+        console.log('[AreaGraph] 🌊 Initialisation...');
         this.canvas = document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d');
         container.appendChild(this.canvas);
@@ -26,9 +25,10 @@ const AreaGraph = {
         this.resize();
         window.addEventListener('resize', () => this.resize());
         
-        // Événements de souris
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('mouseleave', () => this.handleMouseLeave());
+        
+        console.log('[AreaGraph] ✓ Initialisé');
     },
     
     resize() {
@@ -44,10 +44,7 @@ const AreaGraph = {
     },
     
     /**
-     * Lisse les données avec une moyenne mobile
-     * @param {Array} measures - Mesures brutes
-     * @param {Array} activePollens - Pollens actifs
-     * @returns {Array} Mesures lissées
+     * Lisse les données avec moyenne mobile
      */
     smoothData(measures, activePollens) {
         const windowSize = CONSTANTS.AREA.SMOOTHING_WINDOW;
@@ -60,7 +57,6 @@ const AreaGraph = {
                 smoothed: true
             };
             
-            // Pour chaque pollen, calculer la moyenne mobile
             activePollens.forEach(pollen => {
                 const code = POLLEN_TO_CSV_CODE[pollen];
                 const start = Math.max(0, i - halfWindow);
@@ -86,7 +82,7 @@ const AreaGraph = {
     },
     
     /**
-     * Gère le survol de la souris - tooltip collé au curseur
+     * Gère le survol de la souris
      */
     handleMouseMove(e) {
         if (!AppState.selectedZone || AppState.currentMeasures.length === 0) {
@@ -105,12 +101,10 @@ const AreaGraph = {
         const chartWidth = this.canvas.width - padding * 2 - labelSpace;
         const chartHeight = this.canvas.height - padding * 2;
         
-        // Calculer l'index de mesure correspondant au curseur
         const relativeX = mouseX - padding;
         const totalMeasures = AppState.currentMeasures.length;
         const measureIndexAtCursor = Math.floor((relativeX / chartWidth) * totalMeasures);
         
-        // Vérifier si le curseur est dans une zone avec des données
         if (measureIndexAtCursor < 0 || 
             measureIndexAtCursor > AppState.currentMeasureIndex ||
             mouseX < padding || 
@@ -124,7 +118,6 @@ const AreaGraph = {
             return;
         }
         
-        // Zone valide avec des données
         this.cursorX = mouseX;
         
         const measure = this.smoothedData ? 
@@ -132,17 +125,14 @@ const AreaGraph = {
             AppState.currentMeasures[measureIndexAtCursor];
         const activePollens = AppState.getActivePollens();
         
-        // Déterminer quel pollen est survolé
         this.hoveredPollenIndex = this.getHoveredPollenIndex(mouseY, activePollens, measureIndexAtCursor);
         
-        // Collecter les valeurs
         const pollenValues = {};
         activePollens.forEach(pollen => {
             const code = POLLEN_TO_CSV_CODE[pollen];
             pollenValues[pollen] = measure[code] || 0;
         });
         
-        // Tooltip collé au curseur
         this.showTooltip(e.clientX, e.clientY, {
             date: DataUtils.formatDate(measure.date_ech, 'full'),
             pollens: pollenValues,
@@ -152,7 +142,7 @@ const AreaGraph = {
     },
     
     /**
-     * Détermine quel pollen est survolé selon la position Y du curseur
+     * Détermine quel pollen est survolé
      */
     getHoveredPollenIndex(mouseY, activePollens, measureIndex) {
         const padding = 40;
@@ -174,7 +164,7 @@ const AreaGraph = {
     },
     
     /**
-     * Obtient les valeurs empilées pour un index de mesure donné
+     * Obtient les valeurs empilées
      */
     getStackedValues(activePollens, measureIndex) {
         const measures = this.smoothedData || AppState.currentMeasures;
@@ -210,22 +200,22 @@ const AreaGraph = {
     },
     
     /**
-     * Affiche le tooltip collé au curseur
+     * Affiche le tooltip
      */
     showTooltip(x, y, data) {
-        let html = `<div class="viz-tooltip-title" style="font-family: PPLettraMono; font-weight: 500;">${data.date}</div>`;
+        let html = `<div class="viz-tooltip-title">${data.date}</div>`;
         
         if (data.smoothed) {
-            html += `<div class="viz-tooltip-row" style="color: #aaa; font-size: 10px; font-family: PPLettraMono; font-weight: 200;">(lissé)</div>`;
+            html += `<div class="viz-tooltip-row" style="color: #aaa; font-size: 10px;">(lissé)</div>`;
         }
         
         if (data.fictional) {
-            html += `<div class="viz-tooltip-row" style="color: #999; font-family: PPLettraMono; font-weight: 200;">No Data</div>`;
+            html += `<div class="viz-tooltip-row" style="color: #999;">No Data</div>`;
         } else {
             Object.keys(data.pollens).forEach(pollen => {
                 const value = data.pollens[pollen];
                 const color = getPollenColor(pollen);
-                html += `<div class="viz-tooltip-row" style="font-family: PPLettraMono; font-weight: 200;">
+                html += `<div class="viz-tooltip-row">
                     <span style="display:inline-block; width:10px; height:10px; background:${color}; border-radius:50%; margin-right:5px;"></span>
                     ${pollen.toUpperCase()}: ${value.toFixed(1)}
                 </div>`;
@@ -234,7 +224,6 @@ const AreaGraph = {
         
         this.tooltipElement.innerHTML = html;
         this.tooltipElement.classList.add('visible');
-        // Collé au curseur
         this.tooltipElement.style.left = x + 'px';
         this.tooltipElement.style.top = y + 'px';
     },
@@ -252,7 +241,7 @@ const AreaGraph = {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Fond
-        this.ctx.fillStyle = '#d0dcd8';
+        this.ctx.fillStyle = PALETTE.UI.BG_COLOR;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         if (!AppState.selectedZone || AppState.currentMeasures.length === 0) {
@@ -266,28 +255,26 @@ const AreaGraph = {
             return;
         }
         
-        // Lisser les données
         this.smoothedData = this.smoothData(AppState.currentMeasures, activePollens);
         
-        // Dessiner le stream graph
         this.drawStreamGraph(activePollens);
         
-        // Dessiner la barre verticale du curseur
         if (this.cursorX !== null) {
             this.drawCursorBar();
         }
     },
     
     drawPlaceholder() {
-        this.ctx.fillStyle = PALETTE.UI.NATURE_DARK;
-        this.ctx.font = '20px sans-serif';
+        this.ctx.fillStyle = PALETTE.UI.TEXT_COLOR;
+        this.ctx.font = '20px PPLettraMono';
+        this.ctx.fontWeight = '200';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillText('Sélectionnez une zone sur la carte', this.canvas.width / 2, this.canvas.height / 2);
     },
     
     /**
-     * Dessine le stream graph progressivement avec données lissées
+     * Dessine le stream graph
      */
     drawStreamGraph(activePollens) {
         const padding = 40;
@@ -301,10 +288,9 @@ const AreaGraph = {
         
         if (currentIndex < 1) return;
         
-        // Utiliser les données lissées
         const measures = this.smoothedData.slice(0, currentIndex + 1);
         
-        // Calculer les valeurs empilées
+        // Calculer valeurs empilées
         const stackedData = [];
         for (let i = 0; i < measures.length; i++) {
             const measure = measures[i];
@@ -333,11 +319,10 @@ const AreaGraph = {
         
         const dataLength = stackedData.length;
         
-        // Dessiner chaque flux de pollen
+        // Dessiner chaque flux
         activePollens.forEach((pollen, pollenIndex) => {
             const color = getPollenColor(pollen);
             
-            // Opacité selon si survolé
             let fillOpacity, strokeOpacity;
             if (this.hoveredPollenIndex === null) {
                 fillOpacity = 0.7;
@@ -356,7 +341,7 @@ const AreaGraph = {
             
             this.ctx.beginPath();
             
-            // Tracer le bord supérieur
+            // Bord supérieur
             for (let i = 0; i < dataLength; i++) {
                 const x = padding + (i / (totalMeasures - 1)) * chartWidth;
                 const yOffset = stackedData[i].pollens[pollenIndex].end;
@@ -369,7 +354,7 @@ const AreaGraph = {
                 }
             }
             
-            // Tracer le bord inférieur (en sens inverse)
+            // Bord inférieur
             for (let i = dataLength - 1; i >= 0; i--) {
                 const x = padding + (i / (totalMeasures - 1)) * chartWidth;
                 const yOffset = stackedData[i].pollens[pollenIndex].start;
@@ -382,7 +367,7 @@ const AreaGraph = {
             this.ctx.stroke();
         });
         
-        // Dessiner les labels qui suivent le graphique
+        // Labels
         const currentRightEdge = padding + (currentIndex / (totalMeasures - 1)) * chartWidth;
         this.drawPollenLabels(activePollens, stackedData[dataLength - 1], centerY, chartHeight, currentRightEdge);
     },
@@ -395,10 +380,9 @@ const AreaGraph = {
         const minLabelSpacing = 40;
         
         this.ctx.font = 'bold 12px PPLettraMono';
-        this.ctx.fontWeight = '500'; // Medium
+        this.ctx.fontWeight = '500';
         this.ctx.textAlign = 'left';
         this.ctx.textBaseline = 'middle';
-
         
         const idealPositions = activePollens.map((pollen, index) => {
             const pollenData = lastStack.pollens[index];
@@ -434,7 +418,7 @@ const AreaGraph = {
             this.ctx.arc(x - 5, y, 4, 0, Math.PI * 2);
             this.ctx.fill();
             
-            this.ctx.fillStyle = ColorUtils.toRgba(PALETTE.UI.NATURE_DARK, opacity);
+            this.ctx.fillStyle = ColorUtils.toRgba(PALETTE.UI.TEXT_COLOR, opacity);
             this.ctx.fillText(pollen.toUpperCase(), x + 5, y);
         });
     },
@@ -487,7 +471,7 @@ const AreaGraph = {
         const chartHeight = this.canvas.height - padding * 2;
         
         const bandWidth = 6;
-        this.ctx.fillStyle = ColorUtils.toRgba(PALETTE.UI.NATURE_DARK, 0.1);
+        this.ctx.fillStyle = ColorUtils.toRgba(PALETTE.UI.TEXT_COLOR, 0.1);
         this.ctx.fillRect(
             this.cursorX - bandWidth / 2,
             padding,
@@ -495,7 +479,7 @@ const AreaGraph = {
             chartHeight
         );
         
-        this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.NATURE_DARK, 0.6);
+        this.ctx.strokeStyle = ColorUtils.toRgba(PALETTE.UI.TEXT_COLOR, 0.6);
         this.ctx.lineWidth = 2;
         this.ctx.setLineDash([5, 5]);
         this.ctx.beginPath();
@@ -512,6 +496,6 @@ const AreaGraph = {
         if (this.tooltipElement && this.tooltipElement.parentElement) {
             this.tooltipElement.parentElement.removeChild(this.tooltipElement);
         }
-        console.log('[AreaGraph] Détruit');
+        console.log('[AreaGraph] 🗑️ Détruit');
     }
 };

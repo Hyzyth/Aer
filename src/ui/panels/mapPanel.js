@@ -1,32 +1,29 @@
 /**
- * MapPanel.js - Gestion de la carte interactive avec thèmes personnalisés
- * Thèmes: CUSTOM (défaut), LIGHT, CLASSIC
+ * mapPanel.js - Gestion de la carte interactive
+ * Version avec nouvelle palette et contrôles simplifiés
  */
 
 const MapPanel = {
     map: null,
     markers: {},
     selectedMarker: null,
-    currentTheme: CONSTANTS.MAP.DEFAULT_TILE, // 'CUSTOM' par défaut
+    currentTheme: CONSTANTS.MAP.DEFAULT_TILE,
     tileLayer: null,
     
     /**
-     * Initialise la carte et les contrôles
+     * Initialise la carte
      */
     initialize() {
-        console.log('[MapPanel] Initialisation...');
+        console.log('[MapPanel] 🗺️ Initialisation...');
         const container = document.getElementById('map-container');
         
-        // Créer les contrôles de thème
         this.createThemeControls(container);
         
-        // Bornes pour la Bretagne
         const bretagneBounds = [
             [47.3, -5.2],
             [48.9, -1.0]
         ];
         
-        // Initialiser la carte Leaflet
         this.map = L.map(container, {
             center: [CONSTANTS.MAP.CENTER_LAT, CONSTANTS.MAP.CENTER_LON],
             zoom: CONSTANTS.MAP.INITIAL_ZOOM,
@@ -36,27 +33,22 @@ const MapPanel = {
             maxBoundsViscosity: 1.0
         });
         
-        // Ajouter la couche de tuiles par défaut
         this.setTileLayer(this.currentTheme);
-        
-        // Créer les marqueurs
         this.createMarkers();
         
-        // Écouter les changements d'état
         AppState.addListener('zone', () => this.onZoneSelected());
         AppState.addListener('reset', () => this.onReset());
         
-        console.log(`[MapPanel] Carte initialisée avec thème ${this.currentTheme}`);
+        console.log(`[MapPanel] ✓ Carte initialisée (${this.currentTheme})`);
     },
     
     /**
-     * Crée les contrôles de thème de carte
+     * Crée les contrôles de thème (icônes uniquement)
      */
     createThemeControls(container) {
         const controlsDiv = document.createElement('div');
         controlsDiv.className = 'map-theme-controls';
         
-        // Parcourir les thèmes disponibles
         Object.keys(CONSTANTS.MAP.TILES).forEach(themeKey => {
             const theme = CONSTANTS.MAP.TILES[themeKey];
             const btn = document.createElement('button');
@@ -67,14 +59,10 @@ const MapPanel = {
             
             const img = document.createElement('img');
             img.src = `${CONSTANTS.PATHS.UI_ICONS}${theme.icon}`;
-            img.alt = theme.label;
-            img.onerror = () => {
-                console.warn(`[MapPanel] Icône non trouvée: ${theme.icon}`);
-                btn.textContent = theme.label[0];
-            };
+            img.alt = themeKey;
+            img.onerror = () => console.warn(`[MapPanel] ⚠️ Icône manquante: ${theme.icon}`);
             
             btn.appendChild(img);
-            btn.title = theme.label;
             btn.dataset.themeId = themeKey;
             
             btn.addEventListener('click', () => {
@@ -97,43 +85,12 @@ const MapPanel = {
     updateThemeButtons() {
         const buttons = document.querySelectorAll('.theme-btn');
         buttons.forEach(btn => {
-            if (btn.dataset.themeId === this.currentTheme) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
+            btn.classList.toggle('active', btn.dataset.themeId === this.currentTheme);
         });
     },
     
     /**
-     * Retourne les couleurs selon le thème actif
-     */
-    getThemeColors() {
-        switch (this.currentTheme) {
-            case 'CLASSIC':
-                return {
-                    tooltip: 'rgba(255, 255, 255, 0.95)',
-                    tooltipText: '#2d4a2b',
-                    markerStroke: '#333333'
-                };
-            case 'LIGHT':
-                return {
-                    tooltip: 'rgba(45, 74, 43, 0.95)',
-                    tooltipText: '#ffffff',
-                    markerStroke: '#2d4a2b'
-                };
-            case 'CUSTOM':
-            default:
-                return {
-                    tooltip: 'rgba(45, 74, 43, 0.95)',
-                    tooltipText: '#ffffff',
-                    markerStroke: '#2d4a2b'
-                };
-        }
-    },
-    
-    /**
-     * Change la couche de tuiles de la carte
+     * Change la couche de tuiles
      */
     setTileLayer(themeKey) {
         if (this.tileLayer) {
@@ -150,15 +107,12 @@ const MapPanel = {
             attribution: theme.attribution,
             maxZoom: CONSTANTS.MAP.MAX_ZOOM
         }).addTo(this.map);
-        
-        console.log(`[MapPanel] Tuiles chargées: ${themeKey}`);
     },
     
     /**
      * Crée les marqueurs pour toutes les zones
      */
     createMarkers() {
-        const themeColors = this.getThemeColors();
         let markerCount = 0;
         
         AppState.zones.forEach(zoneName => {
@@ -170,46 +124,33 @@ const MapPanel = {
             const marker = L.circleMarker([stats.coords.lat, stats.coords.lon], {
                 radius: CONSTANTS.MAP.CIRCLE_RADIUS,
                 fillColor: color,
-                color: themeColors.markerStroke,
+                color: PALETTE.UI.TEXT_COLOR,
                 weight: CONSTANTS.MAP.CIRCLE_WEIGHT,
                 opacity: CONSTANTS.MAP.CIRCLE_OPACITY,
                 fillOpacity: 0.6
             });
             
-            marker.on('mouseover', (e) => {
-                this.onMarkerHover(zoneName, e);
-            });
-            
-            marker.on('mouseout', () => {
-                this.onMarkerOut();
-            });
-            
-            marker.on('mousemove', (e) => {
-                Tooltip.update(e.originalEvent.clientX, e.originalEvent.clientY);
-            });
-            
-            marker.on('click', () => {
-                this.onMarkerClick(zoneName);
-            });
+            marker.on('mouseover', (e) => this.onMarkerHover(zoneName, e));
+            marker.on('mouseout', () => this.onMarkerOut());
+            marker.on('mousemove', (e) => Tooltip.update(e.originalEvent.clientX, e.originalEvent.clientY));
+            marker.on('click', () => this.onMarkerClick(zoneName));
             
             marker.addTo(this.map);
             this.markers[zoneName] = marker;
             markerCount++;
         });
         
-        console.log(`[MapPanel] ${markerCount} marqueurs créés`);
+        console.log(`[MapPanel] ✓ ${markerCount} marqueurs créés`);
     },
     
     /**
-     * Met à jour les couleurs des marqueurs selon le thème
+     * Met à jour les couleurs des marqueurs
      */
     updateMarkerColors() {
-        const themeColors = this.getThemeColors();
-        
         Object.keys(this.markers).forEach(zoneName => {
             const marker = this.markers[zoneName];
             marker.setStyle({
-                color: themeColors.markerStroke
+                color: PALETTE.UI.TEXT_COLOR
             });
         });
     },
@@ -221,13 +162,10 @@ const MapPanel = {
         const stats = DataLoader.getZoneStats(zoneName);
         if (!stats) return;
         
-        const themeColors = this.getThemeColors();
-        
         Tooltip.showZoneInfo(
             event.originalEvent.clientX,
             event.originalEvent.clientY,
-            stats,
-            themeColors
+            stats
         );
         
         const marker = this.markers[zoneName];
@@ -240,7 +178,7 @@ const MapPanel = {
     },
     
     /**
-     * Gère la sortie du survol d'un marqueur
+     * Gère la sortie du survol
      */
     onMarkerOut() {
         Tooltip.hide();
@@ -256,7 +194,7 @@ const MapPanel = {
     },
     
     /**
-     * Gère le clic sur un marqueur avec animation de pulsation
+     * Gère le clic sur un marqueur (avec animation pulsation)
      */
     onMarkerClick(zoneName) {
         const marker = this.markers[zoneName];
@@ -305,8 +243,6 @@ const MapPanel = {
      * Gère la sélection d'une zone
      */
     onZoneSelected() {
-        const themeColors = this.getThemeColors();
-        
         // Réinitialiser tous les marqueurs
         Object.keys(this.markers).forEach(zoneName => {
             const marker = this.markers[zoneName];
@@ -317,11 +253,11 @@ const MapPanel = {
                 radius: CONSTANTS.MAP.CIRCLE_RADIUS,
                 weight: CONSTANTS.MAP.CIRCLE_WEIGHT,
                 fillColor: color,
-                color: themeColors.markerStroke
+                color: PALETTE.UI.TEXT_COLOR
             });
         });
         
-        // Mettre en évidence le marqueur sélectionné
+        // Mettre en évidence la zone sélectionnée
         if (AppState.selectedZone) {
             const marker = this.markers[AppState.selectedZone];
             const stats = DataLoader.getZoneStats(AppState.selectedZone);
@@ -333,10 +269,10 @@ const MapPanel = {
                     radius: CONSTANTS.MAP.SELECTED_RADIUS,
                     weight: CONSTANTS.MAP.CIRCLE_WEIGHT * 2,
                     fillColor: color,
-                    color: themeColors.markerStroke
+                    color: PALETTE.UI.TEXT_COLOR
                 });
                 
-                // Zoomer sur la zone
+                // Zoom sur la zone
                 this.map.flyTo(
                     [stats.coords.lat, stats.coords.lon],
                     CONSTANTS.MAP.INITIAL_ZOOM + 1,
@@ -350,10 +286,10 @@ const MapPanel = {
     },
     
     /**
-     * Reset complet de la carte
+     * Reset de la carte
      */
     onReset() {
-        console.log('[MapPanel] Reset de la carte');
+        console.log('[MapPanel] 🔄 Reset de la carte');
         
         // Retour au thème par défaut
         this.currentTheme = CONSTANTS.MAP.DEFAULT_TILE;
@@ -371,7 +307,6 @@ const MapPanel = {
         );
         
         // Réinitialiser tous les marqueurs
-        const themeColors = this.getThemeColors();
         Object.keys(this.markers).forEach(zoneName => {
             const marker = this.markers[zoneName];
             const stats = DataLoader.getZoneStats(zoneName);
@@ -381,7 +316,7 @@ const MapPanel = {
                 radius: CONSTANTS.MAP.CIRCLE_RADIUS,
                 weight: CONSTANTS.MAP.CIRCLE_WEIGHT,
                 fillColor: color,
-                color: themeColors.markerStroke
+                color: PALETTE.UI.TEXT_COLOR
             });
         });
     }

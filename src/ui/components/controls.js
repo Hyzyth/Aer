@@ -1,7 +1,6 @@
 /**
  * controls.js - Gestion des contrôles de l'interface utilisateur
- * 
- * Timeline: timeBar.png reste toujours à 100% de largeur
+ * Version optimisée avec nouvelle organisation
  */
 
 const Controls = {
@@ -11,7 +10,7 @@ const Controls = {
      * Initialise tous les contrôles
      */
     initialize() {
-        console.log('[Controls] Initialisation...');
+        console.log('[Controls] 🎮 Initialisation...');
         
         this.elements = {
             modeSelector: document.getElementById('mode-selector'),
@@ -31,21 +30,24 @@ const Controls = {
         this.setupTimelineControls();
         this.setupActionButtons();
         
-        // Écouter les changements d'état
+        // Écouteurs d'événements
         AppState.addListener('zone', () => this.updateTimelineDisplay());
         AppState.addListener('year', () => this.updateTimelineDisplay());
         AppState.addListener('measures', () => this.updateTimelineDisplay());
         AppState.addListener('timeline', () => this.updateTimelineDisplay());
         AppState.addListener('playing', () => this.updatePlayButton());
         
-        console.log('[Controls] ✓ Initialisés avec succès');
+        console.log('[Controls] ✓ Initialisés');
     },
     
+    /**
+     * Configure le sélecteur de mode (icônes seulement)
+     */
     setupModeSelector() {
         const modes = [
-            { id: CONSTANTS.MODES.RADIAL, icon: 'radial.png', label: 'Radial' },
-            { id: CONSTANTS.MODES.GRID, icon: 'grid.png', label: 'Grille' },
-            { id: CONSTANTS.MODES.AREA, icon: 'stream.png', label: 'Flux' }
+            { id: CONSTANTS.MODES.RADIAL, icon: 'radial.png' },
+            { id: CONSTANTS.MODES.GRID, icon: 'grid.png' },
+            { id: CONSTANTS.MODES.AREA, icon: 'stream.png' }
         ];
         
         modes.forEach(mode => {
@@ -55,13 +57,10 @@ const Controls = {
             
             const img = document.createElement('img');
             img.src = `${CONSTANTS.PATHS.UI_ICONS}${mode.icon}`;
-            img.alt = mode.label;
-            
-            const span = document.createElement('span');
-            span.textContent = mode.label;
+            img.alt = mode.id;
+            img.onerror = () => console.warn(`[Controls] ⚠️ Icône manquante: ${mode.icon}`);
             
             btn.appendChild(img);
-            btn.appendChild(span);
             
             btn.addEventListener('click', () => {
                 AppState.setMode(mode.id);
@@ -72,19 +71,20 @@ const Controls = {
         });
         
         this.updateModeButtons();
+        AppState.addListener('mode', () => this.updateModeButtons());
+        console.log('[Controls] ✓ Modes configurés');
     },
     
     updateModeButtons() {
         const buttons = this.elements.modeSelector.querySelectorAll('.mode-btn');
         buttons.forEach(btn => {
-            if (btn.dataset.mode === AppState.selectedMode) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
+            btn.classList.toggle('active', btn.dataset.mode === AppState.selectedMode);
         });
     },
     
+    /**
+     * Configure le sélecteur d'année
+     */
     setupYearSelector() {
         const select = document.createElement('select');
         
@@ -106,49 +106,45 @@ const Controls = {
         });
         
         this.elements.yearSelector.appendChild(select);
+        console.log('[Controls] ✓ Sélecteur d\'année configuré');
     },
     
     /**
-     * Configure la timeline - timeBar.png RESTE TOUJOURS 100%
+     * Configure la timeline avec les backgrounds
      */
     setupTimelineWithBar() {
         let container = document.getElementById('timeline-slider-container');
         if (!container) {
             container = document.createElement('div');
             container.id = 'timeline-slider-container';
-            
             const controlsBottom = document.getElementById('controls-bottom');
-            const timelineControls = document.getElementById('timeline-controls');
-            
-            if (timelineControls && timelineControls.nextSibling) {
-                controlsBottom.insertBefore(container, timelineControls.nextSibling);
-            } else {
-                controlsBottom.appendChild(container);
-            }
+            controlsBottom.appendChild(container);
         }
         
         container.innerHTML = '';
         
-        // 1. Background (timeBackground.png)
+        // Background
         const background = document.createElement('div');
         background.className = 'timeline-background';
         container.appendChild(background);
         
-        // 2. Barre TOUJOURS PLEINE (timeBar.png) - PAS de changement de width
+        // Barre pleine
         const timelineBar = document.createElement('div');
         timelineBar.className = 'timeline-bar';
-        // PAS de style.width = '0%' - reste toujours 100% via CSS
         container.appendChild(timelineBar);
         
-        // 3. Slider avec timeDot.png
+        // Slider
         const slider = this.elements.timelineSlider;
         if (slider && slider.parentElement) {
             container.appendChild(slider);
         }
         
-        console.log('[Controls] ✓ Timeline configurée (timeBar.png toujours pleine)');
+        console.log('[Controls] ✓ Timeline configurée');
     },
     
+    /**
+     * Configure les contrôles temporels
+     */
     setupTimelineControls() {
         this.elements.backwardBtn.addEventListener('click', () => {
             AppState.previousMeasure();
@@ -171,46 +167,48 @@ const Controls = {
         this.updateTimelineDisplay();
     },
     
+    /**
+     * Configure les boutons d'action
+     */
     setupActionButtons() {
         this.elements.resetBtn.addEventListener('click', () => {
-            console.log('[Controls] Reset demandé');
+            console.log('[Controls] 🔄 Reset demandé');
             AppState.reset();
         });
         
         this.elements.exportBtn.addEventListener('click', () => {
-            console.log('[Controls] Export demandé');
+            console.log('[Controls] 📥 Export demandé');
             ExportPanel.exportVisualization();
         });
     },
     
     /**
      * Met à jour l'affichage de la timeline
-     * NOTE: timeBar.png reste toujours pleine, seul le slider bouge
      */
     updateTimelineDisplay() {
         const maxIndex = AppState.currentMeasures.length - 1;
         
-        // Mettre à jour le slider
+        // Mise à jour du slider
         this.elements.timelineSlider.max = maxIndex;
         this.elements.timelineSlider.value = AppState.currentMeasureIndex;
         
-        // PAS de mise à jour de la largeur de timeBar - elle reste toujours 100%
-        
-        // Mettre à jour l'affichage de la date
+        // Affichage de la date
         const currentMeasure = AppState.getCurrentMeasure();
         if (currentMeasure) {
-            const dateText = DataUtils.formatDate(currentMeasure.date_ech, 'full');
-            this.elements.dateDisplay.textContent = dateText;
+            this.elements.dateDisplay.textContent = DataUtils.formatDate(currentMeasure.date_ech, 'full');
         } else {
             this.elements.dateDisplay.textContent = 'Sélectionnez une zone';
         }
         
-        // Activer/désactiver les boutons
+        // État des boutons
         this.elements.backwardBtn.disabled = AppState.currentMeasureIndex <= 0;
         this.elements.forwardBtn.disabled = AppState.currentMeasureIndex >= maxIndex;
         this.elements.playPauseBtn.disabled = maxIndex < 0;
     },
     
+    /**
+     * Met à jour le bouton play/pause
+     */
     updatePlayButton() {
         const img = this.elements.playPauseBtn.querySelector('img');
         if (AppState.isPlaying) {
