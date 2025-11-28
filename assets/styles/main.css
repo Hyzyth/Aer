@@ -84,7 +84,7 @@ body {
     display: flex;
     align-items: center;
     gap: 15px;
-    padding: 15px;
+    padding: 10px 10px 0px 10px;
     background: transparent;
     position: relative;
     z-index: 15;
